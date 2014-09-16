@@ -1,0 +1,23 @@
+{
+  "name": "minoserver",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "3.4.8",
+    "jade": "1.1.5",
+    "request": "*",
+    "connect": "2.x",
+    "tracer": "*",
+    "minodb": "*",
+    "extend": "MarcusLongmuir/extend",
+    "fieldval" : "FieldVal/fieldval-js#develop_test+coverage",
+    "fieldval-basicval" : "FieldVal/fieldval-basicval-js#develop",
+    "fieldval-rules" : "FieldVal/fieldval-rules-js#develop_array",
+    "body-parser": "*",
+    "mustache-express": "*"
+  },
+  "devDependencies": {
+    "gulp-nodemon" : "*",
+    "gulp": "^3.6.1"
+  }
+}

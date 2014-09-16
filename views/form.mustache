@@ -1,0 +1,62 @@
+<script src="/jquery/dist/jquery.js"></script>
+
+<script src="/fieldval/fieldval.js"></script>
+<script src="/fieldval-basicval/fieldval-basicval.js"></script>
+<script src="/fieldval-ui/fieldval-ui.js"></script>
+<script src="/fieldval-rules-js/fieldval-rules.js"></script>
+
+<!-- Apply the "minimal" theme to FieldVal-UI -->
+<link rel="stylesheet" type="text/css" href="/fieldval-ui/themes/minimal.css">
+<script src="/fieldval-ui/themes/minimal.js"></script>
+
+<script>
+$(document).ready(function(){
+
+    var type_object = {{{rule}}}
+
+    var vr = new ValidationRule();
+	var rule_error = vr.init(type_object);
+    if(rule_error){
+        console.error(rule_error);
+        return;
+    }
+
+	var form = vr.create_form();
+
+    form.val({
+        "first_name": "John",
+        "last_name": "Smith",
+        "office_number": 17,
+        "a_choice": "1",
+        "address": {
+            "street_address": "33 Green Park Lane",
+            "city": "Fillertextville",
+            "zip_code": 90909
+        },
+        "interests": [
+            "One",true,3
+        ]
+    })
+
+	$("body").append(
+		form.element.append(
+			$("<button />").text("Submit")
+		),
+		output = $("<pre />")
+	)
+
+	form.on_submit(function(object){
+
+	    var error = vr.validate(object);
+	  
+		if(error){
+			console.log(error);
+			form.error(error)
+			output.text('"error": '+JSON.stringify(error,null,4));
+		} else {
+			form.clear_errors();
+			output.text('"object": '+JSON.stringify(object,null,4));
+		}
+	})
+})
+</script>
