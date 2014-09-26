@@ -7,9 +7,7 @@ var mustacheExpress = require('mustache-express');
 var http = require('http');
 var path = require('path');
 
-var globals = require("./globals");
-
-function EndpointServer(){
+function EndpointServer(minoval){
 	var us = this;
 
 	us.express_server = express();
@@ -25,7 +23,7 @@ function EndpointServer(){
 
     us.express_server.get('/types', function(req, res) {
         var types = [];
-        globals.mino.api.call({username:"TestUser"},{
+        minoval.mino.api.call({username:"TestUser"},{
             "function": "search",
             parameters: {
                 paths: [
@@ -74,7 +72,7 @@ function EndpointServer(){
             }
         }
 
-        globals.mino.api.call({username:"TestUser"},{
+        minoval.mino.api.call({username:"TestUser"},{
             "function": "save",
             parameters: {
                 objects: [

@@ -7,11 +7,10 @@ var mustacheExpress = require('mustache-express');
 var http = require('http');
 var path = require('path');
 
-var globals = require("./globals");
-
-function UIServer(){
+function UIServer(minoval){
 	var us = this;
 
+	us.minoval = minoval;
 	us.express_server = express();
 
     us.express_server.disable('etag');//Prevents 304s
@@ -24,7 +23,7 @@ function UIServer(){
     us.express_server.disable('etag');//Prevents 304s
 
     us.express_server.get('/forms/:name', function(req, res) {	
-		globals.minoval.get_endpoint_rule(req.params.name, function(rule) {
+		minoval.get_endpoint_rule(req.params.name, function(rule) {
 			logger.log(req.params.name, JSON.stringify(rule, null, 4))
 			var params = {
 				rule: JSON.stringify(rule)
@@ -37,7 +36,7 @@ function UIServer(){
 
 	us.express_server.post('/endpoint/:name', function(req, res) {
 		logger.log(req.params);
-		globals.minoval.validate(req.params.name, req.body, function(validator) {
+		minoval.validate(req.params.name, req.body, function(validator) {
 			var error = validator.end();
 			logger.log(error);
 			res.json(error);

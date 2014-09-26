@@ -25,24 +25,15 @@ server.set('view engine', 'mustache');
 server.use('/api/', mino.api_server())
 server.use('/ui/', mino.ui_server())
 
-
-var globals = require('./globals')
-globals.mino = mino;
-
 var MinoVal = require('./MinoVal');
 var minoval = new MinoVal(mino);
-globals.minoval = minoval;
 
 server.use('/minoval/', minoval.endpoint_server());
 server.use('/minoval/', minoval.example_server());
 
 
 mino.api.connect(function(){
-
-	require('./initial_data')(mino, function(err, res) {
-	})
-
-})
+});
 
 http.createServer(server).listen(server.get('port'), function() {
     console.log('Server started on port ' + server.get('port'));

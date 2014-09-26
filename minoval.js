@@ -8,8 +8,8 @@ var ExampleServer = require('./ExampleServer');
 function MinoVal(mino) {
 	var minoval = this;
 	minoval.mino = mino;
-	minoval._endpoint_server = new EndpointServer();
-	minoval._example_server = new ExampleServer();
+	minoval._endpoint_server = new EndpointServer(minoval);
+	minoval._example_server = new ExampleServer(minoval);
 }
 
 MinoVal.prototype.validate = function(rule_name, params, callback) {
