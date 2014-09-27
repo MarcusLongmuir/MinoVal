@@ -9,7 +9,7 @@
     "request": "*",
     "connect": "2.x",
     "tracer": "*",
-    "minodb": "https://bestan:09915eb57c27b7417bc43e2735ab93890c76e4c9@github.com/MarcusLongmuir/MinoDB.git",
+    "minodb": "git+https://bestan:09915eb57c27b7417bc43e2735ab93890c76e4c9@github.com/MarcusLongmuir/MinoDB.git#develop",
     "extend": "MarcusLongmuir/extend",
     "fieldval" : "FieldVal/fieldval-js#develop",
     "fieldval-basicval" : "FieldVal/fieldval-basicval-js#develop",
