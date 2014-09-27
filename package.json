@@ -13,7 +13,7 @@
     "extend": "MarcusLongmuir/extend",
     "fieldval" : "FieldVal/fieldval-js#develop",
     "fieldval-basicval" : "FieldVal/fieldval-basicval-js#develop",
-    "fieldval-rules" : "FieldVal/fieldval-rules-js#develop_array",
+    "fieldval-rules" : "FieldVal/fieldval-rules-js#develop",
     "body-parser": "*",
     "mustache-express": "*"
   },
