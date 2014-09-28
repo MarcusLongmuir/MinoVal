@@ -25,11 +25,11 @@ server.set('view engine', 'mustache');
 server.use('/api/', mino.api_server())
 server.use('/ui/', mino.ui_server())
 
-var MinoVal = require('./MinoVal');
-var minoval = new MinoVal(mino);
+// var MinoVal = require('./MinoVal');
+// var minoval = new MinoVal(mino);
 
-server.use('/minoval/', minoval.endpoint_server());
-server.use('/minoval/', minoval.example_server());
+// server.use('/minoval/', minoval.endpoint_server());
+// server.use('/minoval/', minoval.example_server());
 
 
 mino.api.connect(function(){
