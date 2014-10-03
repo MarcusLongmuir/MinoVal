@@ -72,57 +72,95 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 		}
 		logger.log(res.objects[0])
 
-		var keys = res.objects[0].mino_type;
+		var endpoint = res.objects[0].mino_type;
+		logger.log(endpoint);
 		var validation_rule = {
 			type: 'object',
 			fields: []
 		}
-		logger.log(keys)
-		var completed = 0;
-		for (var key in keys) {
-			minoval.get_type(key, function(err, res) {
-				completed++;
-				logger.log(err,res.objects);
-				var type = res.objects[0].mino_type;
-				var found = false;
-				var rule;
-				for (var i=0; i<validation_rule.fields.length; i++) {
-					if (validation_rule.fields[i].name == type.name) {
-						found = true;
-						rule = validation_rule.fields[i]
-						break;
+
+		var find_rule = function(name, rule) {
+			logger.log(name, rule)
+			if (rule.fields === undefined) {
+				return
+			}
+
+			for (var i=0; i < rule.fields.length; i++) {
+				var field = rule.fields[i]
+				if (name === field.name) {
+					return field
+				}
+			}
+		}
+
+		var build_rule = function(endpoint, rule, result) {
+			logger.log(endpoint, rule, result)
+			for (var key in endpoint) {
+				if (typeof(endpoint[key]) === 'object') {
+					
+					var new_rule = find_rule(key, rule)
+					logger.log(new_rule);
+					if (new_rule !== undefined) {
+						var new_result = {
+							name: new_rule.name,
+							display_name: new_rule.display_name,
+							type: "object",
+							fields: []
+						}
+						result.fields.push(new_result)
+
+						build_rule(endpoint[key], new_rule, new_result)
+					}
+
+				} else {
+					var new_rule = find_rule(key, rule);
+					logger.log(key, new_rule);
+					if (new_rule !== undefined) {
+						result.fields.push(new_rule)
 					}
 				}
-				if (!found) {
-					rule = {
-						name: type.name,
-						display_name: type.display_name,
-						type: type.type,
+			}
+
+		}
+
+		var waiting_for = 0;
+		
+		var result = {
+            "name" : name,
+            "display_name" : name,
+            "type" : "object",
+            "fields" : []
+		};
+
+		for (var i in endpoint) {
+			waiting_for++;
+			(function(key) {
+
+				minoval.get_type(key, function(err, res){
+					var rule = res.objects[0].mino_type;
+					logger.log(key, rule, endpoint);
+					
+					var new_result = {
+						name: rule.name,
+						display_name: rule.display_name,
+						type: "object",
 						fields: []
 					}
-					validation_rule.fields.push(rule)
-				}
 
-				logger.log(rule)
-				for (var i=0; i<keys[key].length; i++) {
-					var field_name = keys[key][i]
-					logger.log(field_name)
-					logger.log(validation_rule)
-					for (var j=0; j<type.fields.length; j++) {
-						var field = type.fields[j];
-						if (field.name == field_name) {
-							rule.fields.push(field)		
-						}
+					result.fields.push(new_result);
+
+					build_rule(endpoint[key], rule, new_result)
+
+					waiting_for--;
+					if (waiting_for == 0) {
+						logger.log(JSON.stringify(result, null, 4));
+						callback(result);
 					}
-					
-				}
-				logger.log(JSON.stringify(validation_rule, null,4));
-				if (completed == Object.keys(keys).length) {
-					callback(validation_rule);
-				}
-			}); 
-			
+				});
+			})(i);
 		}
+
+
 	})
 }
 

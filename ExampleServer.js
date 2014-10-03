@@ -28,13 +28,11 @@ function UIServer(minoval){
 			logger.log(req.params.name, JSON.stringify(rule, null, 4))
 			
 			var original_url = req.originalUrl;
-	        var mino_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length)
-	        var ui_path = mino_path+"/";
+	        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
 
-	        logger.log(ui_path);
 			var params = {
 				rule: JSON.stringify(rule),
-				ui_path: ui_path
+				minoval_path: minoval_path
 			}
 
 			logger.log(JSON.stringify(rule));

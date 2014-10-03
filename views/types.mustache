@@ -12,26 +12,17 @@
 <script>
 $(document).ready(function(){
 
-    var type_object = {{{rule}}}
+    var types = {{{types}}}
+    console.log(types);
 
     var vr = new ValidationRule();
-	var rule_error = vr.init(type_object);
+	var rule_error = vr.init(types);
     if(rule_error){
         console.error(rule_error);
         return;
     }
 
 	var form = vr.create_form();
-
-    form.val({
-    	user: {
-    		id: 123,
-    		first_name: 123,
-    		last_name: 123,
-    		Address: 123,
-    		company_id: 123
-    	},
-    })
 
 	$("body").append(
 		form.element.append(
@@ -41,7 +32,7 @@ $(document).ready(function(){
 	)
 
 	form.on_submit(function(object){
-
+		console.log(object);
 	    var error = vr.validate(object);
 	  
 		if(error){
@@ -53,7 +44,7 @@ $(document).ready(function(){
 			output.text('"object": '+JSON.stringify(object,null,4));
 
 			var path = location.pathname.split('/');
-			var url = '{{{minoval_paath}}}endpoint/' + path[path.length-1];
+			var url = '{{{minoval_path}}}create_endpoint';
 
 			$.ajax({
 		        type: "POST",
@@ -62,7 +53,7 @@ $(document).ready(function(){
 		        dataType: "json",
 		        data: JSON.stringify(object),
 		        success: function(response) {
-		            console.log(response);
+		            window.location.pathname = response.redirect;
 		        },
 		        error: function(err, response) {
 		        	console.log(err, response);

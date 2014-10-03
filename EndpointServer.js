@@ -22,7 +22,13 @@ function EndpointServer(minoval){
     us.express_server.disable('etag');//Prevents 304s
 
     us.express_server.get('/types', function(req, res) {
-        var types = [];
+        var types = {
+            "name" : "types",
+            "display_name" : "types",
+            "type" : "object",
+            "fields" : []
+        };
+        
         minoval.mino.api.call({username:"TestUser"},{
             "function": "search",
             parameters: {
@@ -31,60 +37,106 @@ function EndpointServer(minoval){
                 ]
             }
         },function(err,types_res){
-            for (var i=0; i<types_res.objects.length; i++) {
-                types[types_res.objects[i].name] = types_res.objects[i].mino_type
-            }
-            logger.log(types)
 
-            var html = '<form method="POST" action="create_endpoint">';
-            for (var name in types) {
-                var type = types[name];
-                html += '<b>' + type.name +'</b><br>'
-                logger.log(type.fields)
-                if (type.fields) {
-                    for (var j=0; j<type.fields.length; j++) {
-                        var inner_type = type.fields[j]
-                        logger.log(inner_type)
-                        html+="<input type='checkbox' checked name='" + type.name + ":" + inner_type.name +"'>"
-                        html+='' + inner_type.name + '<br>'
+            var boolean_levels = function(object, result) {
+                logger.log(object, result);
+                if (object.fields === undefined) {
+                    return;
+                }
+
+                for (var i=0; i<object.fields.length; i++) {
+                    var field = object.fields[i];
+                    if (field.type == 'object') {
+                        var new_result = {
+                            name: field.name,
+                            display_name: field.display_name,
+                            type: "object",
+                            fields: []
+                        }
+                        logger.log('new result', field, new_result);
+                        result.fields.push(new_result);
+                        boolean_levels(field, new_result)
+                    } else {
+                        logger.log('new field', field)
+                        result.fields.push({
+                            name: field.name,
+                            display_name: field.display_name,
+                            type: "boolean"
+                        })
                     }
                 }
             }
-            html += '<input type="text" name="name"><br><button type="submit">Save</button></form>'
-            res.send(html);
+
+            for (var i=0; i<types_res.objects.length; i++) {
+                var type = types_res.objects[i].mino_type
+                types.fields.push(type);
+            }
+            logger.log('received types', JSON.stringify(types, null, 4))
+
+            var boolean_types = {
+                "name" : "types",
+                "display_name" : "types",
+                "type" : "object",
+                "fields" : []
+            }
+
+            boolean_levels(types, boolean_types);
+            boolean_types.fields.push({
+                name: "name",
+                display_name: "Name",
+                type: "text"
+            })
+
+            var params = {
+                types: JSON.stringify(boolean_types)
+            }
+
+            res.render('types.mustache', params);
         });
     });
 
     us.express_server.post('/create_endpoint', function(req, res) {
         logger.log(req.body)
 
-        var types = {}
+        var types = req.body;
+        var name = types.name;
+        delete types.name;
 
-        for (var key in req.body) {
-            if (key.indexOf(':') != -1) {
-                var type = key.split(':')[0]
-                var field = key.split(':')[1]
-
-                if (types[type] == undefined) {
-                    types[type] = []
+        var exclude_unused_params = function(object) {
+            for (var key in object) {
+                if (object[key] === false) {
+                    delete object[key]
+                } else if (typeof(object[key]) === 'object') {
+                    exclude_unused_params(object[key])
                 }
-                types[type].push(field)
+            }
+
+            for (var key in object) {
+                if (typeof(object[key]) === 'object' && Object.getOwnPropertyNames(object[key]).length == 0) {
+                    delete object[key]
+                }
             }
         }
+
+        exclude_unused_params(types);
 
         minoval.mino.api.call({username:"TestUser"},{
             "function": "save",
             parameters: {
                 objects: [
                     {
-                        name: req.body.name,
+                        name: name,
                         path: "/TestUser/endpoints/",
                         mino_type: types
                     }
                 ]
             }
         },function(err,response){
-            res.redirect('/forms/'+req.body.name)
+            var original_url = req.originalUrl;
+            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+            res.json({
+                redirect: minoval_path + 'forms/' + name
+            });
         })
     })
 
