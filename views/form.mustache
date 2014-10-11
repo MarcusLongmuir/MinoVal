@@ -12,7 +12,13 @@
 <script>
 $(document).ready(function(){
 
-    var type_object = {{{rule}}}
+    var type_object = {{{rule}}};
+
+    if (type_object === null) {
+    	var message = $("<p/>").text("Form doesn't exist");
+    	$("body").append(message);
+    	return;
+    }
 
     var vr = new ValidationRule();
 	var rule_error = vr.init(type_object);

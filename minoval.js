@@ -72,8 +72,13 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 		}
 		logger.log(res.objects[0])
 
+		if (res.objects[0] == undefined) {
+			callback(null)
+			return;
+		}
 		var endpoint = res.objects[0].mino_type;
 		logger.log(endpoint);
+		
 		var validation_rule = {
 			type: 'object',
 			fields: []
@@ -120,7 +125,6 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 					}
 				}
 			}
-
 		}
 
 		var waiting_for = 0;
