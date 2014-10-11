@@ -15,8 +15,10 @@ function MinoVal(mino) {
 MinoVal.prototype.validate = function(rule_name, params, callback) {
 	var minoval = this;
 	minoval.get_endpoint_rule(rule_name, function(rule) {
+		
 		logger.log(fieldval_rules);
 		logger.log(JSON.stringify(fieldval_rules, null, 4));
+    	
     	var ObjectRuleField = fieldval_rules.RuleField.types['object'].class;
         var object_rule_field = new ObjectRuleField(rule);
         object_rule_field.init();
@@ -56,6 +58,58 @@ MinoVal.prototype.example_server = function() {
 	return minoval._example_server.express_server;
 }
 
+MinoVal.prototype.create_object_rule = function(name, display_name) {
+	return {
+		name: name,
+		display_name: display_name,
+		type: "object",
+		fields: []
+	}
+}
+
+MinoVal.prototype.find_field_in_object = function(name, rule) {
+	var minoval = this;
+	logger.log(name, rule)
+	if (rule.fields === undefined) {
+		return
+	}
+
+	for (var i=0; i < rule.fields.length; i++) {
+		var field = rule.fields[i]
+		if (name === field.name) {
+			return field
+		}
+	}
+}
+
+MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, result) {
+	var minoval = this;
+	logger.log(endpoint, object, result)
+	for (var key in endpoint) {
+		if (typeof(endpoint[key]) === 'object') {
+
+			//Object - inspect each child field recursively
+			
+			var next_field = minoval.find_field_in_object(key, object);
+			if (next_field !== undefined) {
+				var next_reuslt = minoval.create_object_rule(next_field.name, next_field.display_name);
+				result.fields.push(next_result)
+				minoval.get_endpoint_rules_from_object(endpoint[key], next_field, next_result);
+			}
+
+		} else {
+
+			//Field - add to the rule
+
+			var next_field = minoval.find_field_in_object(key, object);
+			logger.log(key, next_field);
+			if (next_field !== undefined) {
+				result.fields.push(next_field);
+			}
+		}
+	}
+}
+
 MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 	var minoval = this;
 	minoval.mino.api.call({username:"TestUser"},{
@@ -78,63 +132,10 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 		}
 		var endpoint = res.objects[0].mino_type;
 		logger.log(endpoint);
-		
-		var validation_rule = {
-			type: 'object',
-			fields: []
-		}
-
-		var find_rule = function(name, rule) {
-			logger.log(name, rule)
-			if (rule.fields === undefined) {
-				return
-			}
-
-			for (var i=0; i < rule.fields.length; i++) {
-				var field = rule.fields[i]
-				if (name === field.name) {
-					return field
-				}
-			}
-		}
-
-		var build_rule = function(endpoint, rule, result) {
-			logger.log(endpoint, rule, result)
-			for (var key in endpoint) {
-				if (typeof(endpoint[key]) === 'object') {
-					
-					var new_rule = find_rule(key, rule)
-					logger.log(new_rule);
-					if (new_rule !== undefined) {
-						var new_result = {
-							name: new_rule.name,
-							display_name: new_rule.display_name,
-							type: "object",
-							fields: []
-						}
-						result.fields.push(new_result)
-
-						build_rule(endpoint[key], new_rule, new_result)
-					}
-
-				} else {
-					var new_rule = find_rule(key, rule);
-					logger.log(key, new_rule);
-					if (new_rule !== undefined) {
-						result.fields.push(new_rule)
-					}
-				}
-			}
-		}
 
 		var waiting_for = 0;
 		
-		var result = {
-            "name" : name,
-            "display_name" : name,
-            "type" : "object",
-            "fields" : []
-		};
+		var result = minoval.create_object_rule(name, name);
 
 		for (var i in endpoint) {
 			waiting_for++;
@@ -144,16 +145,10 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 					var rule = res.objects[0].mino_type;
 					logger.log(key, rule, endpoint);
 					
-					var new_result = {
-						name: rule.name,
-						display_name: rule.display_name,
-						type: "object",
-						fields: []
-					}
+					var next_result = minoval.create_object_rule(rule.name, rule.dsplay_name);
+					result.fields.push(next_result);
 
-					result.fields.push(new_result);
-
-					build_rule(endpoint[key], rule, new_result)
+					minoval.get_endpoint_rules_from_object(endpoint[key], rule, next_result)
 
 					waiting_for--;
 					if (waiting_for == 0) {
@@ -163,7 +158,6 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 				});
 			})(i);
 		}
-
 
 	})
 }
