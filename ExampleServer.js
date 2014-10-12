@@ -7,7 +7,7 @@ var mustacheExpress = require('mustache-express');
 var http = require('http');
 var path = require('path');
 
-function UIServer(minoval){
+function ExampleServer(minoval){
 	var us = this;
 
 	us.minoval = minoval;
@@ -51,4 +51,4 @@ function UIServer(minoval){
 	});
 }
 
-module.exports = UIServer;
+module.exports = ExampleServer;
