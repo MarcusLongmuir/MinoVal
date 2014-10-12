@@ -19,7 +19,6 @@ function EndpointServer(minoval){
 
     us.express_server.use(bodyParser());
     us.express_server.use(express.static(path.join(__dirname, './public')));
-    us.express_server.use(express.static(path.join(__dirname, './bower_components')));
     us.express_server.disable('etag');//Prevents 304s
 
     //Serve the same html file (if a static file wasn't served)

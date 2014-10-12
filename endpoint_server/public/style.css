@@ -141,6 +141,149 @@ table {
 .not_found_page {
   color: red;
 }
+.fv_form {
+  width: auto;
+  display: block;
+  position: relative;
+}
+.fv_form.rows .fv_field_container > .fv_field_title {
+  width: 20%;
+  vertical-align: top;
+}
+.fv_form.rows .fv_field_container > .fv_field {
+  width: 80%;
+  display: inline-block;
+}
+.fv_field_container {
+  position: relative;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  box-sizing: border-box;
+}
+.fv_field_container.fv_field_error > .fv_field_title {
+  color: #AA0000;
+}
+.fv_field_container.fv_field_error > .fv_field > .fv_input_holder > input {
+  border: 1px solid #AA0000;
+}
+.fv_field_container.fv_field_error > .fv_field > .fv_input_holder > textarea {
+  border: 1px solid #AA0000;
+}
+.fv_field_container > .fv_field_title {
+  font-size: 16px;
+  display: inline-block;
+  padding-right: 5px;
+  box-sizing: border-box;
+}
+.fv_field_container > .fv_field_description {
+  font-size: 12px;
+}
+.fv_field {
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+.fv_field > .fv_input_holder {
+  box-sizing: border-box;
+}
+.fv_field > .fv_input_holder > input {
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  padding-left: 5px;
+  padding-right: 5px;
+  box-sizing: border-box;
+  margin: 0px;
+  height: 30px;
+  line-height: 30px;
+  border: 1px solid #999;
+}
+.fv_field > .fv_input_holder > textarea {
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  margin: 0px;
+  resize: none;
+  min-height: 100px;
+  box-sizing: border-box;
+  border: 1px solid #999;
+}
+.fv_error_message {
+  background-color: #AA0000;
+  color: white;
+  font-size: 14px;
+  display: inline-block;
+  padding: 5px;
+}
+.fv_display_field > .fv_input_holder > div {
+  font-size: 14px;
+}
+.fv_text_field > .fv_input_holder > textarea.fv_text_input {
+  width: 100%;
+  font-size: 14px;
+}
+.fv_text_field > .fv_input_holder > input.fv_text_input {
+  width: 100%;
+  font-size: 14px;
+}
+.fv_text_field.fv_view_mode > .fv_input_holder > input.fv_text_input {
+  border: 1px solid #EEE;
+}
+.fv_text_field.fv_view_mode > .fv_input_holder > textarea.fv_text_input {
+  border: 1px solid #EEE;
+}
+.fv_date_field > .fv_input_holder > .fv_date_input {
+  font-size: 14px;
+  display: inline-block;
+}
+.fv_date_field > .fv_input_holder > .fv_date_separator {
+  display: inline-block;
+  width: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+.fv_object_field > .fv_input_holder {
+  padding-left: 10px;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields {
+  padding-left: 10px;
+  padding-bottom: 5px;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields > .fv_field_container {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields > .fv_field_container > .fv_field_title {
+  display: none;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields > .fv_field_container > .fv_field.fv_nested {
+  padding-left: 35px;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields > .fv_field_container > .fv_field > .fv_field_remove_button {
+  -webkit-appearance: none;
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-color: #777;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border: none;
+}
+.fv_array_field > .fv_input_holder > .fv_nested_fields > .fv_field_container > .fv_field > .fv_field_remove_button:active {
+  background-color: #AAA;
+  color: black;
+}
+.fv_array_field > .fv_input_holder > .fv_add_field_button {
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-color: green;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border: none;
+}
+.fv_array_field > .fv_input_holder > .fv_add_field_button:active {
+  background-color: #0F0;
+}
 .page_holder {
   position: relative;
 }
