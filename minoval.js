@@ -2,8 +2,8 @@ var FieldVal = require('fieldval');
 var logger = require('tracer').console();
 var fieldval_rules = require('fieldval-rules');
 
-var EndpointServer = require('./EndpointServer');
-var ExampleServer = require('./ExampleServer');
+var EndpointServer = require('./endpoint_server/EndpointServer');
+var ExampleServer = require('./example_server/ExampleServer');
 
 function MinoVal(mino) {
 	var minoval = this;

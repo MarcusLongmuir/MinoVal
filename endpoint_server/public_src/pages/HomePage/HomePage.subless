@@ -1,0 +1,10 @@
+.home_page{
+	table {
+		margin-top: 10px;
+		margin-bottom: 10px;
+	}
+	td {
+		padding-left: 20px;
+		padding-right: 20px;
+	}
+}

@@ -19,14 +19,28 @@ function ExampleServer(minoval){
     us.express_server.set('view engine', 'mustache');
 
     us.express_server.use(bodyParser());
+    us.express_server.use(express.static(path.join(__dirname, 'public')));
     us.express_server.use(express.static(path.join(__dirname, 'bower_components')));
     us.express_server.disable('etag');//Prevents 304s
 
+    //Serve the same html file (if a static file wasn't served)
+    us.express_server.get('/*', function(req, res) {
 
-    us.express_server.get('/forms/:name', function(req, res) {	
-		minoval.get_endpoint_rule(req.params.name, function(rule) {
-			logger.log(req.params.name, JSON.stringify(rule, null, 4))
-			
+        var original_url = req.originalUrl;
+        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+        logger.log(original_url, minoval_path);
+
+        var params = {
+            minoval_path: minoval_path
+        }
+
+        res.render('root.mustache', params);
+    });
+
+
+    us.express_server.post('/get_endpoint', function(req, res) {
+    	logger.log(req.body.name);
+		minoval.get_endpoint_rule(req.body.name, function(rule) {
 			var original_url = req.originalUrl;
 	        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
 
@@ -37,7 +51,7 @@ function ExampleServer(minoval){
 
 			logger.log(JSON.stringify(rule));
 			logger.log(params);
-			res.render('form.mustache', params);
+			res.json(rule);
 		});
     });
 

@@ -18,15 +18,26 @@ function EndpointServer(minoval){
     us.express_server.set('view engine', 'mustache');
 
     us.express_server.use(bodyParser());
-    us.express_server.use(express.static(path.join(__dirname, 'bower_components')));
+    us.express_server.use(express.static(path.join(__dirname, './public')));
+    us.express_server.use(express.static(path.join(__dirname, './bower_components')));
     us.express_server.disable('etag');//Prevents 304s
 
-    us.express_server.get('/types', function(req, res) {
+    //Serve the same html file (if a static file wasn't served)
+    us.express_server.get('/*', function(req, res) {
+
+        var original_url = req.originalUrl;
+        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+
+        var params = {
+            minoval_path: minoval_path
+        }
+
+        res.render('root.mustache', params);
+    });
+
+    us.express_server.post('/get_types', function(req, res) {
         minoval.get_types_as_booleans(function(err, types) {
-            var params = {
-                types: JSON.stringify(types)
-            }
-            res.render('types.mustache', params);
+            res.json(types);
         });
     });
 
@@ -47,6 +58,20 @@ function EndpointServer(minoval){
 
         });
     })
+
+    us.express_server.post('/get_endpoints', function(req, res) {
+        minoval.mino.api.call({username:"TestUser"},{
+            "function": "search",
+            parameters: {
+                paths: [
+                    "/TestUser/endpoints/"  
+                ]
+            }
+        },function(err, endpoints_res){
+            logger.log(err, endpoints_res);
+            res.json(endpoints_res);
+        });
+    });
 
 }
 
