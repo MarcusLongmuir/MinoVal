@@ -17027,9 +17027,9 @@ HomePage.prototype.fetch_data = function() {
                 $("<td/>").append(
                     $("<div/>").text(name)
                 ),
-                $("<td/>").append(
-                    $("<a/>").text("Edit").attr("href", minoval_path + "endpoint/"+name)
-                ),
+                // $("<td/>").append(
+                //     $("<a/>").text("Edit").attr("href", minoval_path + "endpoint/"+name)
+                // ),
                 $("<td/>").append(
                     $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
                 )
