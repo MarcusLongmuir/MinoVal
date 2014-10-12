@@ -202,7 +202,7 @@ MinoVal.prototype.create_endpoint = function(name, types, callback) {
 
 MinoVal.prototype.get_types_as_booleans = function(callback) {
 	var minoval = this;
-	
+
 	var types = {
 	    "name" : "types",
 	    "display_name" : "types",
@@ -219,7 +219,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	    }
 	},function(err,types_res){
 
-	    var boolean_levels = function(object, result) {
+	    var convert_object_fields_to_booleans = function(object, result) {
 	        logger.log(object, result);
 	        if (object.fields === undefined) {
 	            return;
@@ -236,7 +236,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	                }
 	                logger.log('new result', field, new_result);
 	                result.fields.push(new_result);
-	                boolean_levels(field, new_result)
+	                convert_object_fields_to_booleans(field, new_result)
 	            } else {
 	                logger.log('new field', field)
 	                result.fields.push({
@@ -261,7 +261,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	        "fields" : []
 	    }
 
-	    boolean_levels(types, boolean_types);
+	    convert_object_fields_to_booleans(types, boolean_types);
 	    boolean_types.fields.push({
 	        name: "name",
 	        display_name: "Name",
