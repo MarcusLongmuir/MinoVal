@@ -61,7 +61,7 @@ HomePage.prototype.fetch_data = function() {
 HomePage.prototype.delete_endpoint = function(name) {
     var page = this;
 
-    $.post(minoval_path + "delete_endpoint", function(res) {
+    $.post(minoval_path + "delete_endpoint", {name: name}, function(res) {
         page.fetch_data();
     });
 }
