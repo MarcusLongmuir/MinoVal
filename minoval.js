@@ -273,4 +273,18 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	});
 }
 
+MinoVal.prototype.delete_endpoint = function(name, callback) {
+	var minoval = this;
+	minoval.mino.api.call({username:"TestUser"},{
+		"function": "delete",
+		parameters: {
+			addresses: [
+				"/TestUser/endpoints/"+name	
+			]
+		}
+	},function(err,res){
+		callback(err, res);
+	});
+}
+
 module.exports = MinoVal;

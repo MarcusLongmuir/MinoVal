@@ -52,11 +52,23 @@ function EndpointServer(minoval){
             var original_url = req.originalUrl;
             var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
             res.json({
-                redirect: minoval_path + 'forms/' + name
+                success:true
             });
 
         });
-    })
+    });
+
+    us.express_server.post('/delete_endpoint', function(req, res) {
+        logger.log(req.body)
+        minoval.delete_endpoint(req.body.name, function(error, response) {
+            logger.log(error, response);
+            if (error) {
+                res.json(error)
+            } else {
+                res.json(response);
+            }
+        });
+    });    
 
     us.express_server.post('/get_endpoints', function(req, res) {
         minoval.mino.api.call({username:"TestUser"},{

@@ -17008,8 +17008,10 @@ function HomePage(req) {
 
 HomePage.prototype.fetch_data = function() {
     var page = this;
+    console.log("fetching");
     $.post(minoval_path + 'get_endpoints', function(res) {
         console.log(res);
+        page.table.empty();
         var objects = res.objects;
         
         if (objects === undefined) {
@@ -17031,10 +17033,24 @@ HomePage.prototype.fetch_data = function() {
                 //     $("<a/>").text("Edit").attr("href", minoval_path + "endpoint/"+name)
                 // ),
                 $("<td/>").append(
+                    $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
+                        var name = $(this).attr("endpoint_name");
+                        page.delete_endpoint(name);
+                    })
+                ),
+                $("<td/>").append(
                     $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
                 )
             );
         }
+    });
+}
+
+HomePage.prototype.delete_endpoint = function(name) {
+    var page = this;
+
+    $.post(minoval_path + "delete_endpoint", function(res) {
+        page.fetch_data();
     });
 }
 
