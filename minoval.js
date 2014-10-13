@@ -92,7 +92,7 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 			
 			var next_field = minoval.find_field_in_object(key, object);
 			if (next_field !== undefined) {
-				var next_reuslt = minoval.create_object_rule(next_field.name, next_field.display_name);
+				var next_result = minoval.create_object_rule(next_field.name, next_field.display_name);
 				result.fields.push(next_result)
 				minoval.get_endpoint_rules_from_object(endpoint[key], next_field, next_result);
 			}
