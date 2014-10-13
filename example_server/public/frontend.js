@@ -17133,7 +17133,7 @@ Header.prototype.resize = function(resize_obj) {
 }
 
 
-var page_title_append = "SAFE Example Site";
+var page_title_append = "MinoVal";
 
 var header = new Header();
 

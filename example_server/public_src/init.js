@@ -10,7 +10,7 @@
 @import("common_elements/common_elements.js");
 
 
-var page_title_append = "SAFE Example Site";
+var page_title_append = "MinoVal";
 
 var header = new Header();
 

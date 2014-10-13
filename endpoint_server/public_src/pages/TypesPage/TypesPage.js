@@ -79,7 +79,7 @@ TypesPage.prototype.fetch_data = function() {
     		        dataType: "json",
     		        data: JSON.stringify(object),
     		        success: function(response) {
-    		            SAFE.load_url(SAFE.path);
+    		            SAFE.load_url(SAFE.path, true);
     		        },
     		        error: function(err, response) {
     		        	console.log(err, response);

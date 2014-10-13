@@ -51,7 +51,7 @@ HomePage.prototype.fetch_data = function() {
                     })
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name).ajax_url()
+                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
                 )
             );
         }

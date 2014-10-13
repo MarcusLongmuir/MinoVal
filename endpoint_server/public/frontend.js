@@ -17039,7 +17039,7 @@ HomePage.prototype.fetch_data = function() {
                     })
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name).ajax_url()
+                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
                 )
             );
         }
@@ -17153,7 +17153,7 @@ TypesPage.prototype.fetch_data = function() {
     		        dataType: "json",
     		        data: JSON.stringify(object),
     		        success: function(response) {
-    		            SAFE.load_url(SAFE.path);
+    		            SAFE.load_url(SAFE.path, true);
     		        },
     		        error: function(err, response) {
     		        	console.log(err, response);
@@ -17230,7 +17230,7 @@ Header.prototype.resize = function(resize_obj) {
     var header = this;
 }
 
-var page_title_append = "SAFE Example Site";
+var page_title_append = "MinoVal";
 var header = new Header();
 
 var get_query_params = function () {
