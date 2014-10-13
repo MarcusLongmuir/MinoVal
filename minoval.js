@@ -207,7 +207,7 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
 
         logger.log(err, response);
 
-        if (response.objects[0] !== undefined) {
+        if (response.objects[0] !== undefined && response.objects[0] !== null) {
         	object['_id'] = response.objects[0]['_id']
         }
 
