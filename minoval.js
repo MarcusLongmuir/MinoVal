@@ -110,7 +110,7 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 	}
 }
 
-MinoVal.prototype.get_endpoint_rule = function(name, callback) {
+MinoVal.prototype.get_endpoint = function(name, callback) {
 	var minoval = this;
 	minoval.mino.api.call({username:"TestUser"},{
 		"function": "get",
@@ -131,6 +131,14 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 			return;
 		}
 		var endpoint = res.objects[0].mino_type;
+
+		callback(err, endpoint);
+	});
+}
+
+MinoVal.prototype.get_endpoint_rule = function(name, callback) {
+	var minoval = this;
+	minoval.get_endpoint(name, function(err, endpoint) {
 		logger.log(endpoint);
 
 		var waiting_for = 0;
@@ -162,7 +170,7 @@ MinoVal.prototype.get_endpoint_rule = function(name, callback) {
 	})
 }
 
-MinoVal.prototype.create_endpoint = function(name, types, callback) {
+MinoVal.prototype.save_endpoint = function(name, types, callback) {
 	var minoval = this;
 
 	var exclude_unused_params = function(object) {
@@ -182,20 +190,37 @@ MinoVal.prototype.create_endpoint = function(name, types, callback) {
 	}
 
 	exclude_unused_params(types);
-
 	minoval.mino.api.call({username:"TestUser"},{
-	    "function": "save",
+	    "function": "get",
 	    parameters: {
-	        objects: [
-	            {
-	                name: name,
-	                path: "/TestUser/endpoints/",
-	                mino_type: types
-	            }
+	        addresses: [
+	            "/TestUser/endpoints/"+name,
 	        ]
 	    }
 	},function(err,response){
-	    callback(err, response);
+	  	
+		var object = {
+            name: name,
+            path: "/TestUser/endpoints/",
+            mino_type: types
+        };
+
+        logger.log(err, response);
+
+        if (response.objects[0] !== undefined) {
+        	object['_id'] = response.objects[0]['_id']
+        }
+
+		minoval.mino.api.call({username:"TestUser"},{
+		    "function": "save",
+		    parameters: {
+		        objects: [
+		            object
+		        ]
+		    }
+		},function(err,response){
+		    callback(err, response);
+		})
 	})
 
 }

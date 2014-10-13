@@ -5,7 +5,7 @@ function TypesPage(req) {
 
     TypesPage.superConstructor.call(this);
 
-    header.element.text("Create new endpoint");
+    header.element.text("Create/Edit Endpoint");
 
     page.table = $("<table/>")
 
@@ -15,7 +15,16 @@ function TypesPage(req) {
 
 TypesPage.prototype.fetch_data = function() {
     var page = this;
-    $.post(minoval_path + 'get_types', function(types) {
+    var query_string = get_query_params();
+
+    var data = {};
+    if (query_string.name !== undefined) {
+        data.name = query_string.name;
+    }
+
+    $.post(minoval_path + 'get_types', data, function(res) {
+        var types = res.types;
+        var endpoint = res.endpoint;
         console.log(types);
 
         var vr = new ValidationRule();
@@ -34,6 +43,20 @@ TypesPage.prototype.fetch_data = function() {
     		output = $("<pre />")
     	)
 
+        if (endpoint !== undefined) {
+            form.val(endpoint);
+        }
+
+        console.log(window.location.href, query_string);
+
+        if (query_string.name !== undefined) {
+            console.log("name", query_string.name);
+
+            var name_field = form.fields.name;
+            name_field.val(query_string.name);
+            name_field.disable();
+        }
+
     	form.on_submit(function(object){
     		console.log(object);
     	    var error = vr.validate(object);
@@ -47,7 +70,7 @@ TypesPage.prototype.fetch_data = function() {
     			output.text('"object": '+JSON.stringify(object,null,4));
 
     			var path = location.pathname.split('/');
-    			var url = minoval_path + 'create_endpoint';
+    			var url = minoval_path + 'save_endpoint';
 
     			$.ajax({
     		        type: "POST",

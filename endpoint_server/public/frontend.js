@@ -17029,9 +17029,9 @@ HomePage.prototype.fetch_data = function() {
                 $("<td/>").append(
                     $("<div/>").text(name)
                 ),
-                // $("<td/>").append(
-                //     $("<a/>").text("Edit").attr("href", minoval_path + "endpoint/"+name)
-                // ),
+                $("<td/>").append(
+                    $("<a/>").text("Edit").attr("href", minoval_path + "types/?name="+name).ajax_url()
+                ),
                 $("<td/>").append(
                     $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
                         var name = $(this).attr("endpoint_name");
@@ -17039,7 +17039,7 @@ HomePage.prototype.fetch_data = function() {
                     })
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
+                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name).ajax_url()
                 )
             );
         }
@@ -17079,7 +17079,7 @@ function TypesPage(req) {
 
     TypesPage.superConstructor.call(this);
 
-    header.element.text("Create new endpoint");
+    header.element.text("Create/Edit Endpoint");
 
     page.table = $("<table/>")
 
@@ -17089,7 +17089,16 @@ function TypesPage(req) {
 
 TypesPage.prototype.fetch_data = function() {
     var page = this;
-    $.post(minoval_path + 'get_types', function(types) {
+    var query_string = get_query_params();
+
+    var data = {};
+    if (query_string.name !== undefined) {
+        data.name = query_string.name;
+    }
+
+    $.post(minoval_path + 'get_types', data, function(res) {
+        var types = res.types;
+        var endpoint = res.endpoint;
         console.log(types);
 
         var vr = new ValidationRule();
@@ -17108,6 +17117,20 @@ TypesPage.prototype.fetch_data = function() {
     		output = $("<pre />")
     	)
 
+        if (endpoint !== undefined) {
+            form.val(endpoint);
+        }
+
+        console.log(window.location.href, query_string);
+
+        if (query_string.name !== undefined) {
+            console.log("name", query_string.name);
+
+            var name_field = form.fields.name;
+            name_field.val(query_string.name);
+            name_field.disable();
+        }
+
     	form.on_submit(function(object){
     		console.log(object);
     	    var error = vr.validate(object);
@@ -17121,7 +17144,7 @@ TypesPage.prototype.fetch_data = function() {
     			output.text('"object": '+JSON.stringify(object,null,4));
 
     			var path = location.pathname.split('/');
-    			var url = minoval_path + 'create_endpoint';
+    			var url = minoval_path + 'save_endpoint';
 
     			$.ajax({
     		        type: "POST",
@@ -17209,6 +17232,30 @@ Header.prototype.resize = function(resize_obj) {
 
 var page_title_append = "SAFE Example Site";
 var header = new Header();
+
+var get_query_params = function () {
+    // This function is anonymous, is executed immediately and 
+    // the return value is assigned to QueryString!
+    var query_string = {};
+    var query = window.location.search.substring(1);
+    console.log('query', query);
+    var vars = query.split("&");
+    for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+            // If first entry with this name
+        if (typeof query_string[pair[0]] === "undefined") {
+            query_string[pair[0]] = pair[1];
+            // If second entry with this name
+        } else if (typeof query_string[pair[0]] === "string") {
+            var arr = [ query_string[pair[0]], pair[1] ];
+            query_string[pair[0]] = arr;
+            // If third or later entry with this name
+        } else {
+            query_string[pair[0]].push(pair[1]);
+        }
+    } 
+        return query_string;
+};
 
 $(document).ready(function(){
 

@@ -36,18 +36,29 @@ function EndpointServer(minoval){
 
     us.express_server.post('/get_types', function(req, res) {
         minoval.get_types_as_booleans(function(err, types) {
-            res.json(types);
+            if (req.body.name !== undefined) {
+                minoval.get_endpoint(req.body.name, function(err, endpoint) {
+                    res.json({
+                        endpoint: endpoint,
+                        types: types
+                    })
+                })   
+            } else {
+                res.json({
+                    types: types
+                });
+            }
         });
     });
 
-    us.express_server.post('/create_endpoint', function(req, res) {
+    us.express_server.post('/save_endpoint', function(req, res) {
         logger.log(req.body)
 
         var types = req.body;
         var name = types.name;
         delete types.name;
 
-        minoval.create_endpoint(name, types, function(error, response) {
+        minoval.save_endpoint(name, types, function(error, response) {
             
             var original_url = req.originalUrl;
             var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'

@@ -41,9 +41,9 @@ HomePage.prototype.fetch_data = function() {
                 $("<td/>").append(
                     $("<div/>").text(name)
                 ),
-                // $("<td/>").append(
-                //     $("<a/>").text("Edit").attr("href", minoval_path + "endpoint/"+name)
-                // ),
+                $("<td/>").append(
+                    $("<a/>").text("Edit").attr("href", minoval_path + "types/?name="+name).ajax_url()
+                ),
                 $("<td/>").append(
                     $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
                         var name = $(this).attr("endpoint_name");
@@ -51,7 +51,7 @@ HomePage.prototype.fetch_data = function() {
                     })
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
+                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name).ajax_url()
                 )
             );
         }
