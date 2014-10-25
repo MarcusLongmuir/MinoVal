@@ -6,6 +6,7 @@
   "dependencies": {
     "express": "*",
     "jade": "1.1.5",
+    "errorhandler": "*",
     "request": "*",
     "connect": "2.x",
     "tracer": "*",
@@ -19,6 +20,12 @@
   },
   "devDependencies": {
     "gulp-nodemon" : "*",
-    "gulp": "^3.6.1"
+    "gulp": "^3.6.1",
+    "gulp-util": "^2.2.14",
+    "gulp-imports" : "MarcusLongmuir/gulp-imports",
+    "gulp-less": "^1.2.3",
+    "gulp-concat": "^2.2.0",
+    "gulp-watch": "^0.6.2",
+    "gulp-plumber": "^0.6.1"
   }
 }

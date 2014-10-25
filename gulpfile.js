@@ -1,22 +1,72 @@
 var gulp = require('gulp');
+var gutil = require('gulp-util');
 var logger = require('tracer').console();
 
 var nodemon = require('gulp-nodemon');
 var path = require('path');
 
+var plumber = require('gulp-plumber');
+
+var less = require('gulp-less');
+var concat = require('gulp-concat');
+var gulpImports = require('gulp-imports');
+
 var onError = function (err) {  
-  gutil.beep();
-  console.log(err);
+    gutil.beep();
+    console.log(err);
 };
 
+gulp.task('less', function(){
+
+    var setup_less_compilation = function(folder_name) {
+        gulp.src('./'+ folder_name + '/public_src/style/style.less')
+        .pipe(plumber(onError))
+        .pipe(less())
+        .pipe(concat('style.css'))
+        .pipe(gulp.dest('./' + folder_name + '/public/'));    
+    }
+
+    setup_less_compilation('endpoint_server');
+    setup_less_compilation('example_server');
+    
+});
+
+gulp.task('js', function(){
+
+    var setup_js_compilation = function(folder_name) {
+        gulp.src([
+            folder_name + '/public_src/init.js'
+        ])
+        .pipe(plumber(onError))
+        .pipe(gulpImports())
+        .pipe(concat('frontend.js'))
+        .pipe(gulp.dest('./' + folder_name + '/public/'))
+    }
+
+    setup_js_compilation('endpoint_server');
+    setup_js_compilation('example_server');
+
+});
+
+gulp.task('watch', function(){
+
+    var setup_watcher = function(folder_name) {
+        gulp.watch([folder_name + '/public_src/**/*.js'], ['js']);
+        gulp.watch([folder_name + '/public_src/**/*.less', folder_name + '/public_src/**/*.subless'], ['less']);    
+    }
+
+    setup_watcher('endpoint_server');
+    setup_watcher('example_server');
+});
+
 gulp.task('nodemon', function () {
-  nodemon({ script: 'server.js', watch: [
-  	'server.js',
-  	'node_modules/minodb/api/'
-  ], ext: 'js', ignore: ['node_modules/'] })
-    .on('restart', function () {
-      console.log('restarted!')
-    })
+    nodemon({ script: 'server.js', watch: [
+        'server.js',
+        'node_modules/minodb/api/'
+    ], ext: 'js', ignore: ['node_modules/'] })
+        .on('restart', function () {
+            console.log('restarted!')
+        })
 })
 
 gulp.task('default', function(){
