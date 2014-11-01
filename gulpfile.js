@@ -26,7 +26,7 @@ gulp.task('less', function(){
         .pipe(gulp.dest('./' + folder_name + '/public/'));    
     }
 
-    setup_less_compilation('endpoint_server');
+    setup_less_compilation('config_server');
     setup_less_compilation('example_server');
     
 });
@@ -43,7 +43,7 @@ gulp.task('js', function(){
         .pipe(gulp.dest('./' + folder_name + '/public/'))
     }
 
-    setup_js_compilation('endpoint_server');
+    setup_js_compilation('config_server');
     setup_js_compilation('example_server');
 
 });
@@ -55,7 +55,7 @@ gulp.task('watch', function(){
         gulp.watch([folder_name + '/public_src/**/*.less', folder_name + '/public_src/**/*.subless'], ['less']);    
     }
 
-    setup_watcher('endpoint_server');
+    setup_watcher('config_server');
     setup_watcher('example_server');
 });
 

@@ -3,34 +3,18 @@ var logger = require('tracer').console();
 var express = require('express');
 var fieldval_rules = require('fieldval-rules');
 
-var EndpointServer = require('./endpoint_server/EndpointServer');
-var ExampleServer = require('./example_server/ExampleServer');
+var ConfigServer = require('./config_server/ConfigServer');
 
 function MinoVal(options) {
 	var minoval = this;
-
-	minoval.path = options.path || '/minoval/';
-
-	var endpoint_server = new EndpointServer(minoval);
-	minoval.express_server = endpoint_server.express_server;
-
-
-	if (options.example_path !== undefined) {
-		minoval.example_path = options.example_path;
-		var example_server = new ExampleServer(minoval);
-		minoval.example_express_server = example_server.express_server;
-	}	
-
-	minoval.config_server = express();
-    minoval.config_server.get('*', function(req, res){
-        res.send("MinoVal config")
-    })
+	minoval.config_server = new ConfigServer(minoval);
 }
 
 MinoVal.prototype.get_config_server = function(){
     var minoval = this;
     logger.log("getting config server");
-    return minoval.config_server;
+    logger.log(minoval.config_server.express_server);
+    return minoval.config_server.express_server;
 }
 
 MinoVal.prototype.info = function(){
@@ -44,16 +28,7 @@ MinoVal.prototype.info = function(){
 
 MinoVal.prototype.init = function(minodb){
     var minoval = this;
-
     minoval.minodb = minodb;
-    logger.log(minoval.example_path, minoval.example_express_server);
-    
-    if (minoval.example_path !== undefined) {
-	    minodb.internal_server().use(minoval.example_path, minoval.example_express_server);
-    }
-
-    logger.log(minoval.path);
-    minodb.internal_server().use(minoval.path, minoval.express_server);
 }
 
 MinoVal.prototype.validate = function(rule_name, params, callback) {
@@ -90,16 +65,6 @@ MinoVal.prototype.get_type = function(name, callback) {
 	}, function(err, res) {
 		callback(err,res)
 	});
-}
-
-MinoVal.prototype.endpoint_server = function() {
-	var minoval = this;
-	return minoval._endpoint_server.express_server;
-}
-
-MinoVal.prototype.example_server = function() {
-	var minoval = this;
-	return minoval._example_server.express_server;
 }
 
 MinoVal.prototype.create_object_rule = function(name, display_name) {

@@ -17875,6 +17875,205 @@ Field.prototype.layout = function(){
 	    layout_function.call(field);
 	}
 }
+SAFE.extend(HomePage, Page);
+
+function HomePage(req) {
+    var page = this;
+
+    HomePage.superConstructor.call(this);
+
+    page.table = $("<table/>")
+
+    header.element.text("Endpoints");
+
+    page.element.addClass("home_page").append(
+      page.table,
+      $("<a/>").text("Create new").attr("href", minoval_path + "types").ajax_url()
+    )
+
+    page.fetch_data();
+
+}
+
+HomePage.prototype.fetch_data = function() {
+    var page = this;
+    console.log("fetching");
+    $.post(minoval_path + 'get_endpoints', function(res) {
+        console.log(res);
+        page.table.empty();
+        var objects = res.objects;
+        
+        if (objects === undefined) {
+            return;
+        }
+
+        for (var i=0; i<objects.length; i++) {
+            var object = objects[i];
+            var name = object.name;
+
+            var tr = $("<tr/>");
+            page.table.append(tr);
+
+            tr.append(
+                $("<td/>").append(
+                    $("<div/>").text(name)
+                ),
+                $("<td/>").append(
+                    $("<a/>").text("Edit").attr("href", minoval_path + "types/?name="+name).ajax_url()
+                ),
+                $("<td/>").append(
+                    $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
+                        var name = $(this).attr("endpoint_name");
+                        page.delete_endpoint(name);
+                    })
+                )
+            );
+
+            tr.append(
+                $("<td/>").append(
+                    $("<a/>").text("Example form").attr("href", minoval_path + "form/"+name)
+                )
+            )
+        }
+    });
+}
+
+HomePage.prototype.delete_endpoint = function(name) {
+    var page = this;
+
+    $.post(minoval_path + "delete_endpoint", {name: name}, function(res) {
+        page.fetch_data();
+    });
+}
+
+HomePage.prototype.get_title = function() {
+    var page = this;
+    return null;
+}
+
+HomePage.prototype.init = function() {
+    var page = this;
+
+}
+
+HomePage.prototype.remove = function() {
+    var page = this;
+
+}
+
+HomePage.prototype.resize = function(resize_obj) {
+    var page = this;
+}
+SAFE.extend(TypesPage, Page);
+
+function TypesPage(req) {
+    var page = this;
+
+    TypesPage.superConstructor.call(this);
+
+    header.element.text("Create/Edit Endpoint");
+
+    page.table = $("<table/>")
+
+    page.fetch_data();
+
+}
+
+TypesPage.prototype.fetch_data = function() {
+    var page = this;
+    var query_string = get_query_params();
+
+    var data = {};
+    if (query_string.name !== undefined) {
+        data.name = query_string.name;
+    }
+
+    $.post(minoval_path + 'get_types', data, function(res) {
+        var types = res.types;
+        var endpoint = res.endpoint;
+        console.log(types);
+
+        var vr = new ValidationRule();
+    	var rule_error = vr.init(types);
+        if(rule_error){
+            console.error(rule_error);
+            return;
+        }
+
+    	var form = vr.create_form();
+
+    	page.element.append(
+    		form.element.append(
+    			$("<button />").text("Submit")
+    		),
+    		output = $("<pre />")
+    	)
+
+        if (endpoint !== undefined) {
+            form.val(endpoint);
+        }
+
+        console.log(window.location.href, query_string);
+
+        if (query_string.name !== undefined) {
+            console.log("name", query_string.name);
+
+            var name_field = form.fields.name;
+            name_field.val(query_string.name);
+            name_field.disable();
+        }
+
+    	form.on_submit(function(object){
+    		console.log(object);
+    	    var error = vr.validate(object);
+    	  
+    		if(error){
+    			console.log(error);
+    			form.error(error)
+    			output.text('"error": '+JSON.stringify(error,null,4));
+    		} else {
+    			form.clear_errors();
+    			output.text('"object": '+JSON.stringify(object,null,4));
+
+    			var path = location.pathname.split('/');
+    			var url = minoval_path + 'save_endpoint';
+
+    			$.ajax({
+    		        type: "POST",
+    		        url: url,
+    		        contentType: "application/json; charset=utf-8",
+    		        dataType: "json",
+    		        data: JSON.stringify(object),
+    		        success: function(response) {
+    		            SAFE.load_url(SAFE.path, true);
+    		        },
+    		        error: function(err, response) {
+    		        	console.log(err, response);
+    		        }
+    		    })
+    		}
+    	})
+    });
+}
+
+TypesPage.prototype.get_title = function() {
+    var page = this;
+    return null;
+}
+
+TypesPage.prototype.init = function() {
+    var page = this;
+
+}
+
+TypesPage.prototype.remove = function() {
+    var page = this;
+
+}
+
+TypesPage.prototype.resize = function(resize_obj) {
+    var page = this;
+}
 SAFE.extend(FormPage, Page);
 
 function FormPage(req) {
@@ -17937,23 +18136,6 @@ FormPage.prototype.fetch_data = function() {
             } else {
                 form.clear_errors();
                 output.text('"object": '+JSON.stringify(object,null,4));
-
-                var path = location.pathname.split('/');
-                var url = minoval_path + 'endpoint/' + path[path.length-1];
-
-                $.ajax({
-                    type: "POST",
-                    url: url,
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    data: JSON.stringify(object),
-                    success: function(response) {
-                        console.log(response);
-                    },
-                    error: function(err, response) {
-                        console.log(err, response);
-                    }
-                })
             }
         })
     });
@@ -18009,6 +18191,9 @@ NotFoundPage.prototype.resize = function(resize_obj) {
 
 }
 
+
+SAFE.add_url('/', HomePage);
+SAFE.add_url('/types', TypesPage);
 SAFE.add_url("/form/:name", FormPage);
 function Header() {
     var header = this;
@@ -18021,10 +18206,32 @@ Header.prototype.resize = function(resize_obj) {
     var header = this;
 }
 
-
 var page_title_append = "MinoVal";
-
 var header = new Header();
+
+var get_query_params = function () {
+    // This function is anonymous, is executed immediately and 
+    // the return value is assigned to QueryString!
+    var query_string = {};
+    var query = window.location.search.substring(1);
+    console.log('query', query);
+    var vars = query.split("&");
+    for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+            // If first entry with this name
+        if (typeof query_string[pair[0]] === "undefined") {
+            query_string[pair[0]] = pair[1];
+            // If second entry with this name
+        } else if (typeof query_string[pair[0]] === "string") {
+            var arr = [ query_string[pair[0]], pair[1] ];
+            query_string[pair[0]] = arr;
+            // If third or later entry with this name
+        } else {
+            query_string[pair[0]].push(pair[1]);
+        }
+    } 
+        return query_string;
+};
 
 $(document).ready(function(){
 

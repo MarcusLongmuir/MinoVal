@@ -60,23 +60,6 @@ FormPage.prototype.fetch_data = function() {
             } else {
                 form.clear_errors();
                 output.text('"object": '+JSON.stringify(object,null,4));
-
-                var path = location.pathname.split('/');
-                var url = minoval_path + 'endpoint/' + path[path.length-1];
-
-                $.ajax({
-                    type: "POST",
-                    url: url,
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    data: JSON.stringify(object),
-                    success: function(response) {
-                        console.log(response);
-                    },
-                    error: function(err, response) {
-                        console.log(err, response);
-                    }
-                })
             }
         })
     });

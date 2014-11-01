@@ -7,7 +7,7 @@ var mustacheExpress = require('mustache-express');
 var http = require('http');
 var path = require('path');
 
-function EndpointServer(minoval){
+function ConfigServer(minoval){
 	var us = this;
 
 	us.express_server = express();
@@ -23,15 +23,11 @@ function EndpointServer(minoval){
 
     //Serve the same html file (if a static file wasn't served)
     us.express_server.get('/*', function(req, res) {
-
         var original_url = req.originalUrl;
         var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
 
-        var example_path = minoval_path.substring(0, minoval_path.length - minoval.path.length) + minoval.example_path;
-
         var params = {
             minoval_path: minoval_path,
-            example_path: example_path
         }
 
         res.render('root.mustache', params);
@@ -117,4 +113,4 @@ function EndpointServer(minoval){
 
 }
 
-module.exports = EndpointServer;
+module.exports = ConfigServer;

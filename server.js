@@ -25,10 +25,7 @@ server.use('/mino/', minodb.server())
 
 var MinoVal = require('./minoval');
 
-var minoval = new MinoVal({
-	path: '/minoval/',
-	example_path: '/minoval/example/'
-});
+var minoval = new MinoVal();
 minodb.add_plugin(minoval);
 
 server.get('/*', function(req, res) {

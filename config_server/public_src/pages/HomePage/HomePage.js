@@ -52,13 +52,11 @@ HomePage.prototype.fetch_data = function() {
                 )
             );
 
-            if (example_path) {
-                tr.append(
-                    $("<td/>").append(
-                        $("<a/>").text("Form").attr("href", example_path + "form/"+name)
-                    )
+            tr.append(
+                $("<td/>").append(
+                    $("<a/>").text("Example form").attr("href", minoval_path + "form/"+name)
                 )
-            }
+            )
         }
     });
 }
