@@ -49,11 +49,16 @@ HomePage.prototype.fetch_data = function() {
                         var name = $(this).attr("endpoint_name");
                         page.delete_endpoint(name);
                     })
-                ),
-                $("<td/>").append(
-                    $("<a/>").text("Form").attr("href", minoval_path + "example/form/"+name)
                 )
             );
+
+            if (example_path) {
+                tr.append(
+                    $("<td/>").append(
+                        $("<a/>").text("Form").attr("href", example_path + "form/"+name)
+                    )
+                )
+            }
         }
     });
 }

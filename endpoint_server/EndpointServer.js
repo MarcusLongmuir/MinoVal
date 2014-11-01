@@ -27,8 +27,11 @@ function EndpointServer(minoval){
         var original_url = req.originalUrl;
         var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
 
+        var example_path = minoval_path.substring(0, minoval_path.length - minoval.path.length) + minoval.example_path;
+
         var params = {
-            minoval_path: minoval_path
+            minoval_path: minoval_path,
+            example_path: example_path
         }
 
         res.render('root.mustache', params);

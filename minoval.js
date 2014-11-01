@@ -10,13 +10,16 @@ function MinoVal(options) {
 	var minoval = this;
 
 	minoval.path = options.path || '/minoval/';
-	minoval.example_path = options.example_path || '/minoval/example/';
 
 	var endpoint_server = new EndpointServer(minoval);
 	minoval.express_server = endpoint_server.express_server;
 
-	var example_server = new ExampleServer(minoval);
-	minoval.example_express_server = example_server.express_server;
+
+	if (options.example_path !== undefined) {
+		minoval.example_path = options.example_path;
+		var example_server = new ExampleServer(minoval);
+		minoval.example_express_server = example_server.express_server;
+	}	
 
 	minoval.config_server = express();
     minoval.config_server.get('*', function(req, res){
@@ -44,7 +47,12 @@ MinoVal.prototype.init = function(minodb){
 
     minoval.minodb = minodb;
     logger.log(minoval.example_path, minoval.example_express_server);
-    minodb.server().use(minoval.example_path, minoval.example_express_server);
+    
+    if (minoval.example_path !== undefined) {
+	    minodb.server().use(minoval.example_path, minoval.example_express_server);
+    }
+
+    logger.log(minoval.path);
     minodb.server().use(minoval.path, minoval.express_server);
 }
 
