@@ -49,11 +49,11 @@ MinoVal.prototype.init = function(minodb){
     logger.log(minoval.example_path, minoval.example_express_server);
     
     if (minoval.example_path !== undefined) {
-	    minodb.server().use(minoval.example_path, minoval.example_express_server);
+	    minodb.internal_server().use(minoval.example_path, minoval.example_express_server);
     }
 
     logger.log(minoval.path);
-    minodb.server().use(minoval.path, minoval.express_server);
+    minodb.internal_server().use(minoval.path, minoval.express_server);
 }
 
 MinoVal.prototype.validate = function(rule_name, params, callback) {
