@@ -81,11 +81,11 @@ function ConfigServer(minoval){
     });    
 
     us.express_server.post('/get_endpoints', function(req, res) {
-        minoval.minodb.api.call({username:"TestUser"},{
+        minoval.minodb.api.call({username:"testuser"},{
             "function": "search",
             parameters: {
                 paths: [
-                    "/TestUser/endpoints/"  
+                    "/testuser/endpoints/"  
                 ]
             }
         },function(err, endpoints_res){

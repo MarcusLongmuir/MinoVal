@@ -55,7 +55,7 @@ MinoVal.prototype.validate = function(rule_name, params, callback) {
 
 MinoVal.prototype.get_type = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"TestUser"},{
+	minoval.minodb.api.call({username:"testuser"},{
 		"function": "get",
 		parameters: {
 			addresses: [
@@ -121,11 +121,11 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 
 MinoVal.prototype.get_endpoint = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"TestUser"},{
+	minoval.minodb.api.call({username:"testuser"},{
 		"function": "get",
 		parameters: {
 			addresses: [
-				"/TestUser/endpoints/"+name	
+				"/testuser/endpoints/"+name	
 			]
 		}
 	},function(err,res){
@@ -199,18 +199,18 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
 	}
 
 	exclude_unused_params(types);
-	minoval.minodb.api.call({username:"TestUser"},{
+	minoval.minodb.api.call({username:"testuser"},{
 	    "function": "get",
 	    parameters: {
 	        addresses: [
-	            "/TestUser/endpoints/"+name,
+	            "/testuser/endpoints/"+name,
 	        ]
 	    }
 	},function(err,response){
 	  	
 		var object = {
             name: name,
-            path: "/TestUser/endpoints/",
+            path: "/testuser/endpoints/",
             mino_type: types
         };
 
@@ -220,7 +220,7 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
         	object['_id'] = response.objects[0]['_id']
         }
 
-		minoval.minodb.api.call({username:"TestUser"},{
+		minoval.minodb.api.call({username:"testuser"},{
 		    "function": "save",
 		    parameters: {
 		        objects: [
@@ -244,7 +244,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	    "fields" : []
 	};
 	
-	minoval.minodb.api.call({username:"TestUser"},{
+	minoval.minodb.api.call({username:"testuser"},{
 	    "function": "search",
 	    parameters: {
 	        paths: [
@@ -309,11 +309,11 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 
 MinoVal.prototype.delete_endpoint = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"TestUser"},{
+	minoval.minodb.api.call({username:"testuser"},{
 		"function": "delete",
 		parameters: {
 			addresses: [
-				"/TestUser/endpoints/"+name	
+				"/testuser/endpoints/"+name	
 			]
 		}
 	},function(err,res){
