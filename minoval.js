@@ -14,6 +14,23 @@ function MinoVal(options) {
 
 	minoval.main_server = express()
     minoval.main_server.use(express.static(path.join(__dirname, './public')));
+
+    minoval.main_server.post('/get_endpoint', function(req, res) {
+        logger.log(req.body.name);
+        minoval.get_endpoint_rule(req.body.name, function(rule) {
+            var original_url = req.originalUrl;
+            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+
+            var params = {
+                rule: JSON.stringify(rule),
+                minoval_path: minoval_path
+            }
+
+            logger.log(JSON.stringify(rule));
+            logger.log(params);
+            res.json(rule);
+        });
+    });
 }
 
 MinoVal.prototype.get_config_server = function(){
