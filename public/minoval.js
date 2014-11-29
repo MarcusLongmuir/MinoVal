@@ -1,7 +1,20 @@
-function MinoVal(path) {
+function MinoVal() {
     var minoval = this;
-    minoval.path = path;
+    minoval.init_path();
 }
+
+MinoVal.prototype.init_path = function(name, callback) {
+    var cms = this;
+    var scripts = document.getElementsByTagName("script");
+    for (var i=0; i<scripts.length; i++) {
+        var script = scripts[i];
+        if (script.src.indexOf('/minval.js') != -1) {
+            cms.path = script.src.replace('/minoval.js', '');
+            break;
+        }
+    }
+}
+
 
 MinoVal.prototype.get_rule = function(name, callback) {
     var minoval = this;
@@ -28,3 +41,4 @@ MinoVal.prototype.get_rule = function(name, callback) {
     });
 }
 
+minoval = new MinoVal();
