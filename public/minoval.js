@@ -4,12 +4,12 @@ function MinoVal() {
 }
 
 MinoVal.prototype.init_path = function(name, callback) {
-    var cms = this;
+    var minoval = this;
     var scripts = document.getElementsByTagName("script");
     for (var i=0; i<scripts.length; i++) {
         var script = scripts[i];
-        if (script.src.indexOf('/minval.js') != -1) {
-            cms.path = script.src.replace('/minoval.js', '');
+        if (script.src.indexOf('/minoval.js') != -1) {
+            minoval.path = script.src.replace('/minoval.js', '');
             break;
         }
     }
@@ -19,7 +19,7 @@ MinoVal.prototype.init_path = function(name, callback) {
 MinoVal.prototype.get_rule = function(name, callback) {
     var minoval = this;
     console.log("test");
-    $.post(minoval.path + 'get_endpoint', {name: name}, function(type_object) {
+    $.post(minoval.path + '/get_endpoint', {name: name}, function(type_object) {
         if (type_object === null) {
             callback({
                 error_message: "Rule doesn't exist"
