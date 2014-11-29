@@ -1,13 +1,19 @@
 var FieldVal = require('fieldval');
 var logger = require('tracer').console();
 var express = require('express');
+var path = require('path');
 var fieldval_rules = require('fieldval-rules');
+var MinoSDK = require('MinoSDK');
 
 var ConfigServer = require('./config_server/ConfigServer');
 
 function MinoVal(options) {
 	var minoval = this;
+	minoval.user = options.user;
 	minoval.config_server = new ConfigServer(minoval);
+
+	minoval.main_server = express()
+    minoval.main_server.use(express.static(path.join(__dirname, './public')));
 }
 
 MinoVal.prototype.get_config_server = function(){
@@ -29,6 +35,30 @@ MinoVal.prototype.info = function(){
 MinoVal.prototype.init = function(minodb){
     var minoval = this;
     minoval.minodb = minodb;
+
+    minodb.internal_server().use('/minoval', minoval.main_server);
+    minoval.create_folders();
+}
+
+MinoVal.prototype.create_folders = function(callback) {
+    var minoval = this;
+    minoval.sdk = new MinoSDK(minoval.user);
+    minoval.sdk.set_local_api(minoval.minodb.api);
+    minoval.sdk.call({
+       "function": "save",
+        "parameters": {
+            "objects" : [{
+                "name": "endpoints",
+                "path": "/" + minoval.user + "/",
+                "folder": true
+            }]
+        } 
+    }, function(err, res) {
+        logger.log(JSON.stringify(err, null, 4), res); 
+        if (callback !== undefined) {
+            callback();
+        }   
+    })
 }
 
 MinoVal.prototype.validate = function(rule_name, params, callback) {
