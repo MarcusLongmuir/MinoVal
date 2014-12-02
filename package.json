@@ -13,9 +13,9 @@
     "minodb": "git+https://bestan:09915eb57c27b7417bc43e2735ab93890c76e4c9@github.com/MarcusLongmuir/MinoDB.git#develop",
     "minosdk": "*",
     "extend": "MarcusLongmuir/extend",
-    "fieldval" : "FieldVal/fieldval-js#develop",
-    "fieldval-basicval" : "FieldVal/fieldval-basicval-js#develop",
-    "fieldval-rules" : "FieldVal/fieldval-rules-js#develop",
+    "fieldval" : "0.1.5",
+    "fieldval-basicval" : "0.1.4",
+    "fieldval-rules" : "0.2.2",
     "body-parser": "*",
     "mustache-express": "*"
   },

@@ -85,7 +85,7 @@ MinoVal.prototype.validate = function(rule_name, params, callback) {
 		logger.log(fieldval_rules);
 		logger.log(JSON.stringify(fieldval_rules, null, 4));
     	
-    	var ObjectRuleField = fieldval_rules.RuleField.types['object'].class;
+    	var ObjectRuleField = fieldval_rules.FVRuleField.types['object'].class;
         var object_rule_field = new ObjectRuleField(rule);
         object_rule_field.init();
         var error = object_rule_field.validate(params);
