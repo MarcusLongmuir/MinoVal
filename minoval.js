@@ -35,8 +35,6 @@ function MinoVal(options) {
 
 MinoVal.prototype.get_config_server = function(){
     var minoval = this;
-    logger.log("getting config server");
-    logger.log(minoval.config_server.express_server);
     return minoval.config_server.express_server;
 }
 
@@ -102,7 +100,7 @@ MinoVal.prototype.validate = function(rule_name, params, callback) {
 
 MinoVal.prototype.get_type = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"testuser"},{
+	minoval.minodb.api.call({username:minoval.user},{
 		"function": "get",
 		parameters: {
 			addresses: [
@@ -168,11 +166,11 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 
 MinoVal.prototype.get_endpoint = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"testuser"},{
+	minoval.minodb.api.call({username:minoval.user},{
 		"function": "get",
 		parameters: {
 			addresses: [
-				"/testuser/endpoints/"+name	
+				"/"+minoval.user+"/endpoints/"+name	
 			]
 		}
 	},function(err,res){
@@ -246,18 +244,18 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
 	}
 
 	exclude_unused_params(types);
-	minoval.minodb.api.call({username:"testuser"},{
+	minoval.minodb.api.call({username:minoval.user},{
 	    "function": "get",
 	    parameters: {
 	        addresses: [
-	            "/testuser/endpoints/"+name,
+	            "/"+minoval.user+"/endpoints/"+name,
 	        ]
 	    }
 	},function(err,response){
 	  	
 		var object = {
             name: name,
-            path: "/testuser/endpoints/",
+            path: "/"+minoval.user+"/endpoints/",
             mino_type: types
         };
 
@@ -267,7 +265,7 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
         	object['_id'] = response.objects[0]['_id']
         }
 
-		minoval.minodb.api.call({username:"testuser"},{
+		minoval.minodb.api.call({username:minoval.user},{
 		    "function": "save",
 		    parameters: {
 		        objects: [
@@ -291,7 +289,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	    "fields" : []
 	};
 	
-	minoval.minodb.api.call({username:"testuser"},{
+	minoval.minodb.api.call({username:minoval.user},{
 	    "function": "search",
 	    parameters: {
 	        paths: [
@@ -356,11 +354,11 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 
 MinoVal.prototype.delete_endpoint = function(name, callback) {
 	var minoval = this;
-	minoval.minodb.api.call({username:"testuser"},{
+	minoval.minodb.api.call({username:minoval.user},{
 		"function": "delete",
 		parameters: {
 			addresses: [
-				"/testuser/endpoints/"+name	
+				"/"+minoval.user+"/endpoints/"+name	
 			]
 		}
 	},function(err,res){
