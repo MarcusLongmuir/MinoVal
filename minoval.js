@@ -49,12 +49,12 @@ MinoVal.prototype.info = function(){
     };
 }
 
-MinoVal.prototype.init = function(minodb){
+MinoVal.prototype.init = function(minodb, callback){
     var minoval = this;
     minoval.minodb = minodb;
 
     minodb.internal_server().use('/minoval', minoval.main_server);
-    minoval.create_folders();
+    minoval.create_folders(callback);
 }
 
 MinoVal.prototype.create_folders = function(callback) {
