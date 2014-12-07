@@ -25,7 +25,7 @@ server.use('/mino/', mino.server())
 
 var MinoVal = require('./minoval');
 var minoval = new MinoVal({
-	user: "my_app"
+	user: "testuser"
 });
 
 mino.add_plugin(minoval);

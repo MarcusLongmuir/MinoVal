@@ -34,7 +34,7 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/get_types', function(req, res) {
-        minoval.get_types_as_booleans(function(err, types) {
+        minoval.get_types_rule_for_ui(function(err, types) {
             if (req.body.name !== undefined) {
                 minoval.get_endpoint(req.body.name, function(err, endpoint) {
                     res.json({

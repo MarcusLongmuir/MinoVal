@@ -127,7 +127,6 @@ MinoVal.prototype.find_field_in_object = function(name, rule) {
 	if (rule.fields === undefined) {
 		return
 	}
-
 	for (var i=0; i < rule.fields.length; i++) {
 		var field = rule.fields[i]
 		if (name === field.name) {
@@ -140,7 +139,8 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 	var minoval = this;
 	logger.log(endpoint, object, result)
 	for (var key in endpoint) {
-		if (typeof(endpoint[key]) === 'object') {
+		var value = endpoint[key];
+		if (typeof(value) === 'object') {
 
 			//Object - inspect each child field recursively
 			
@@ -148,16 +148,17 @@ MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, re
 			if (next_field !== undefined) {
 				var next_result = minoval.create_object_rule(next_field.name, next_field.display_name);
 				result.fields.push(next_result)
-				minoval.get_endpoint_rules_from_object(endpoint[key], next_field, next_result);
+				minoval.get_endpoint_rules_from_object(value, next_field, next_result);
 			}
 
 		} else {
 
 			//Field - add to the rule
-
 			var next_field = minoval.find_field_in_object(key, object);
-			logger.log(key, next_field);
 			if (next_field !== undefined) {
+				if (typeof(value) === "string") {
+					next_field.name = value;
+				}
 				result.fields.push(next_field);
 			}
 		}
@@ -279,7 +280,7 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
 
 }
 
-MinoVal.prototype.get_types_as_booleans = function(callback) {
+MinoVal.prototype.get_types_rule_for_ui = function(callback) {
 	var minoval = this;
 
 	var types = {
@@ -298,7 +299,7 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	    }
 	},function(err,types_res){
 
-	    var convert_object_fields_to_booleans = function(object, result) {
+	    var convert_object_fields_to_text = function(object, result) {
 	        logger.log(object, result);
 	        if (object.fields === undefined) {
 	            return;
@@ -315,13 +316,13 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	                }
 	                logger.log('new result', field, new_result);
 	                result.fields.push(new_result);
-	                convert_object_fields_to_booleans(field, new_result)
+	                convert_object_fields_to_text(field, new_result)
 	            } else {
 	                logger.log('new field', field)
 	                result.fields.push({
 	                    name: field.name,
 	                    display_name: field.display_name,
-	                    type: "boolean"
+	                    type: "text"
 	                })
 	            }
 	        }
@@ -333,21 +334,21 @@ MinoVal.prototype.get_types_as_booleans = function(callback) {
 	    }
 	    logger.log('received types', JSON.stringify(types, null, 4))
 
-	    var boolean_types = {
+	    var text_types = {
 	        "name" : "types",
 	        "display_name" : "types",
 	        "type" : "object",
 	        "fields" : []
 	    }
 
-	    convert_object_fields_to_booleans(types, boolean_types);
-	    boolean_types.fields.push({
+	    convert_object_fields_to_text(types, text_types);
+	    text_types.fields.push({
 	        name: "name",
 	        display_name: "Name",
 	        type: "text"
 	    })
 
-	    callback(null, boolean_types);
+	    callback(null, text_types);
 	    
 	});
 }
