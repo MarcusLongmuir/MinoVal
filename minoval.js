@@ -238,7 +238,9 @@ MinoVal.prototype.save_endpoint = function(name, types, callback) {
 	    }
 
 	    for (var key in object) {
-	        if (typeof(object[key]) === 'object' && Object.getOwnPropertyNames(object[key]).length == 0) {
+	    	if (object[key] === null) {
+	    		delete(object[key]);
+	    	} else if (typeof(object[key]) === 'object' && Object.getOwnPropertyNames(object[key]).length == 0) {
 	            delete object[key]
 	        }
 	    }
@@ -322,7 +324,8 @@ MinoVal.prototype.get_types_rule_for_ui = function(callback) {
 	                result.fields.push({
 	                    name: field.name,
 	                    display_name: field.display_name,
-	                    type: "text"
+	                    type: "text",
+	                    required: false
 	                })
 	            }
 	        }
