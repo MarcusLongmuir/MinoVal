@@ -13,7 +13,7 @@ var mino = new MinoDB({
     api: true,
     ui: true,
     db_address: db_address
-}, "testuser");
+}, "my_app");
 
 var server = express();
 server.set('port', process.env.PORT || 5002);
@@ -31,18 +31,9 @@ server.set('view engine', 'mustache');
 server.use(express.static(path.join(__dirname, './public')));
 server.use(express.static(path.join(__dirname, './bower_components')));
 
-
-var MinoVal = require('./minoval');
-var minoval = new MinoVal({
-	user: "testuser"
-});
-
-mino.add_plugin(minoval);
-
 server.get('/*', function(req, res) {
     res.send("Minoval 404");
 })
-
 
 mino.create_user({
 	"username": "my_app",
@@ -51,6 +42,13 @@ mino.create_user({
 }, function(err, res){
 
 	logger.log("CREATED USER");
+
+	var MinoVal = require('./minoval');
+	var minoval = new MinoVal({
+		user: "my_app"
+	});
+
+	mino.add_plugin(minoval);
 
 	http.createServer(server).listen(server.get('port'), function() {
 	    console.log('Server started on port ' + server.get('port'));
