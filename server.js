@@ -56,12 +56,3 @@ mino.create_user({
 	    console.log('Server started on port ' + server.get('port'));
 	});
 });
-
-setTimeout(function (){
-
-minoval.validate("test", "username", function(validator) {
-	var error = validator.end();
-	logger.log('\n\n', error, '\n\n');
-})
-
-}, 1000);
