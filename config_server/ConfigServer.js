@@ -97,14 +97,6 @@ function ConfigServer(minoval){
         });
     });
 
-    us.express_server.post('/get_endpoint', function(req, res) {
-        logger.log(req.body.name);
-        minoval.get_endpoint(req.body.name, function(err, endpoint) {
-            logger.log(endpoint.mino_type);
-            res.json(endpoint.mino_type);
-        });
-    });
-
 }
 
 module.exports = ConfigServer;

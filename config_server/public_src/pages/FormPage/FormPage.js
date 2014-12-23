@@ -16,21 +16,8 @@ function FormPage(req) {
 
 FormPage.prototype.fetch_data = function() {
     var page = this;
-    $.post(minoval_path + 'get_endpoint', {name: page.name}, function(type_object) {
-        if (type_object === null) {
-            var message = $("<p/>").text("Form doesn't exist");
-            $("body").append(message);
-            return;
-        }
-
-        console.log(type_object);
-        var vr = new FVRule();
-        var rule_error = vr.init(type_object);
-        if(rule_error){
-            console.error(rule_error);
-            return;
-        }
-
+    minoval.get_endpoint(page.name, function(err, vr) {
+        
         var form = vr.create_form();
 
         console.log(form);

@@ -23,17 +23,24 @@ function MinoVal(options) {
     minoval.main_server.post('/get_rule', function(req, res) {
         logger.log(req.body.name);
         minoval.get_rule_object(req.body.name, function(err, rule) {
-            var original_url = req.originalUrl;
-            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
-
-            var params = {
-                rule: JSON.stringify(rule),
-                minoval_path: minoval_path
+            logger.log(err, rule);
+            if (err) {
+            	res.json(err);
+            } else {
+            	res.json(rule);	
             }
+        });
+    });
 
-            logger.log(JSON.stringify(rule));
-            logger.log(params);
-            res.json(rule);
+    minoval.main_server.post('/get_endpoint', function(req, res) {
+        logger.log(req.body.name);
+        minoval.get_endpoint(req.body.name, function(err, endpoint) {
+        	logger.log(err, endpoint);
+            if (err) {
+            	res.json(err);
+            } else {
+            	res.json(endpoint.mino_type);	
+            }
         });
     });
 
@@ -148,7 +155,7 @@ MinoVal.prototype.get_endpoint = function(name, callback) {
 		logger.log(res.objects[0])
 
 		if (res.objects[0] == undefined) {
-			callback(null)
+			callback(errors.ENDPOINT_NOT_FOUND)
 			return;
 		}
 		var endpoint = res.objects[0];

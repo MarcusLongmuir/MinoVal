@@ -46,6 +46,14 @@ gulp.task('js', function(){
     setup_js_compilation('config_server');
     setup_js_compilation('example_server');
 
+    gulp.src([
+        'public_src/minoval.js'
+    ])
+    .pipe(plumber(onError))
+    .pipe(gulpImports())
+    .pipe(concat('minoval.js'))
+    .pipe(gulp.dest('public/'))
+
 });
 
 gulp.task('watch', function(){
@@ -58,6 +66,7 @@ gulp.task('watch', function(){
     setup_watcher('config_server');
     setup_watcher('example_server');
     gulp.watch(['common/**/*.js'], ['js']);
+    gulp.watch(['public_src/**/*.js'], ['js']);
 
 });
 
