@@ -5,6 +5,7 @@ var http = require('http');
 var path = require('path');
 var bodyParser = require('body-parser');
 var errorHandler = require('errorhandler');
+var mustacheExpress = require('mustache-express');
 
 var MinoDB = require('minodb');
 var db_address = process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017/minodb';
@@ -12,7 +13,7 @@ var mino = new MinoDB({
     api: true,
     ui: true,
     db_address: db_address
-})
+}, "testuser");
 
 var server = express();
 server.set('port', process.env.PORT || 5002);
@@ -23,6 +24,14 @@ server.use(bodyParser());
 
 server.use('/mino/', mino.server())
 
+server.engine('mustache', mustacheExpress());
+server.set('views', path.join(__dirname, 'views'));
+server.set('view engine', 'mustache');
+
+server.use(express.static(path.join(__dirname, './public')));
+server.use(express.static(path.join(__dirname, './bower_components')));
+
+
 var MinoVal = require('./minoval');
 var minoval = new MinoVal({
 	user: "testuser"
@@ -31,7 +40,7 @@ var minoval = new MinoVal({
 mino.add_plugin(minoval);
 
 server.get('/*', function(req, res) {
-    res.send("MinoVal 404");
+    res.send("Minoval 404");
 })
 
 
@@ -47,3 +56,12 @@ mino.create_user({
 	    console.log('Server started on port ' + server.get('port'));
 	});
 });
+
+setTimeout(function (){
+
+minoval.validate("test", "username", function(validator) {
+	var error = validator.end();
+	logger.log('\n\n', error, '\n\n');
+})
+
+}, 1000);

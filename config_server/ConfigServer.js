@@ -34,18 +34,19 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/get_types', function(req, res) {
-        minoval.get_types_rule_for_ui(function(err, types) {
+        minoval.get_types(function(err, types) {
+            
+            var json_response = {
+                types: types
+            }
+
             if (req.body.name !== undefined) {
                 minoval.get_endpoint(req.body.name, function(err, endpoint) {
-                    res.json({
-                        endpoint: endpoint,
-                        types: types
-                    })
+                    json_response.endpoint = endpoint;
+                    res.json(json_response);
                 })   
             } else {
-                res.json({
-                    types: types
-                });
+                res.json(json_response);
             }
         });
     });
@@ -53,12 +54,14 @@ function ConfigServer(minoval){
     us.express_server.post('/save_endpoint', function(req, res) {
         logger.log(req.body)
 
-        var types = req.body;
-        var name = types.name;
-        delete types.name;
+        var object = req.body;
+        minoval.save_endpoint(object, function(error, response) {
+            logger.log(error, response)
+            if (error) {
+                res.json(error, 400);
+                return;
+            }
 
-        minoval.save_endpoint(name, types, function(error, response) {
-            
             var original_url = req.originalUrl;
             var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
             res.json({
@@ -96,18 +99,9 @@ function ConfigServer(minoval){
 
     us.express_server.post('/get_endpoint', function(req, res) {
         logger.log(req.body.name);
-        minoval.get_endpoint_rule(req.body.name, function(rule) {
-            var original_url = req.originalUrl;
-            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
-
-            var params = {
-                rule: JSON.stringify(rule),
-                minoval_path: minoval_path
-            }
-
-            logger.log(JSON.stringify(rule));
-            logger.log(params);
-            res.json(rule);
+        minoval.get_endpoint(req.body.name, function(err, endpoint) {
+            logger.log(endpoint.mino_type);
+            res.json(endpoint.mino_type);
         });
     });
 

@@ -23,69 +23,58 @@ TypesPage.prototype.fetch_data = function() {
     }
 
     $.post(minoval_path + 'get_types', data, function(res) {
-        var types = res.types;
-        var endpoint = res.endpoint;
-        console.log(types);
+        console.log(res);
+        types = res.types;
 
-        var vr = new ValidationRule();
-    	var rule_error = vr.init(types);
-        if(rule_error){
-            console.error(rule_error);
-            return;
+        var endpoint = {};
+        
+        if (res.endpoint) {
+            endpoint = res.endpoint;
         }
 
-    	var form = vr.create_form();
+        var type_field = new MinovalTypeField(endpoint.mino_type, page.element);
+
+        // type_field.form.val(res.endpoint);
 
     	page.element.append(
-    		form.element.append(
-    			$("<button />").text("Submit")
-    		),
+            type_field.element,
+            page.submit = $("<button />").text("Submit"),
     		output = $("<pre />")
     	)
 
-        if (endpoint !== undefined) {
-            form.val(endpoint);
-        }
+        page.submit.click(function() {
+            type_field.form.submit();
+        })
 
         console.log(window.location.href, query_string);
+        console.log('\n\n', type_field.base_fields, '\n\n');
 
-        if (query_string.name !== undefined) {
-            console.log("name", query_string.name);
+        type_field.form.on_submit(function(object) {
+            // var object = type_field.val();
+            console.log(object);
+            output.text('"object": '+JSON.stringify(object,null,4));
 
-            var name_field = form.fields.name;
-            name_field.val(query_string.name);
-            name_field.disable();
-        }
+            endpoint.mino_type = object;
 
-    	form.on_submit(function(object){
-    		console.log(object);
-    	    var error = vr.validate(object);
-    	  
-    		if(error){
-    			console.log(error);
-    			form.error(error)
-    			output.text('"error": '+JSON.stringify(error,null,4));
-    		} else {
-    			form.clear_errors();
-    			output.text('"object": '+JSON.stringify(object,null,4));
+			var path = location.pathname.split('/');
+			var url = minoval_path + 'save_endpoint';
 
-    			var path = location.pathname.split('/');
-    			var url = minoval_path + 'save_endpoint';
-
-    			$.ajax({
-    		        type: "POST",
-    		        url: url,
-    		        contentType: "application/json; charset=utf-8",
-    		        dataType: "json",
-    		        data: JSON.stringify(object),
-    		        success: function(response) {
-    		            SAFE.load_url(SAFE.path, true);
-    		        },
-    		        error: function(err, response) {
-    		        	console.log(err, response);
-    		        }
-    		    })
-    		}
+			$.ajax({
+		        type: "POST",
+		        url: url,
+		        contentType: "application/json; charset=utf-8",
+		        dataType: "json",
+		        data: JSON.stringify(endpoint),
+		        success: function(response) {
+                    type_field.form.clear_errors();
+		            SAFE.load_url(SAFE.path, true);
+                    console.log(response);
+		        },
+		        error: function(err, response) {
+		        	console.log(err.responseJSON, response);
+                    type_field.form.error(err.responseJSON)
+		        }
+		    })
     	})
     });
 }

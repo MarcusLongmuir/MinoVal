@@ -4,6 +4,11 @@ var express = require('express');
 var path = require('path');
 var fieldval_rules = require('fieldval-rules');
 var MinoSDK = require('MinoSDK');
+var FVRule = require('minodb').FVRule;
+var FVRuleField = require('minodb').FVRule.FVRuleField;
+var BasicVal = require('fieldval-basicval');
+var errors = require('./errors');
+var globals = require('./globals');
 
 var ConfigServer = require('./config_server/ConfigServer');
 
@@ -15,9 +20,9 @@ function MinoVal(options) {
 	minoval.main_server = express()
     minoval.main_server.use(express.static(path.join(__dirname, './public')));
 
-    minoval.main_server.post('/get_endpoint', function(req, res) {
+    minoval.main_server.post('/get_rule', function(req, res) {
         logger.log(req.body.name);
-        minoval.get_endpoint_rule(req.body.name, function(rule) {
+        minoval.get_rule_object(req.body.name, function(err, rule) {
             var original_url = req.originalUrl;
             var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
 
@@ -31,7 +36,12 @@ function MinoVal(options) {
             res.json(rule);
         });
     });
+
+    globals.minoval_client = minoval;
+    require('./common/MinovalRuleField.js');
 }
+
+MinoVal.global_client = "test";
 
 MinoVal.prototype.get_config_server = function(){
     var minoval = this;
@@ -76,25 +86,29 @@ MinoVal.prototype.create_folders = function(callback) {
     })
 }
 
-MinoVal.prototype.validate = function(rule_name, params, callback) {
+MinoVal.prototype.validate = function(name, params, callback) {
 	var minoval = this;
-	minoval.get_endpoint_rule(rule_name, function(rule) {
-		
+	minoval.get_endpoint(name, function(err, endpoint) {
+		var rule = endpoint.mino_type;
+		logger.log(rule);
 		logger.log(fieldval_rules);
 		logger.log(JSON.stringify(fieldval_rules, null, 4));
+
+     	var vr = new FVRule();
+     	var error = vr.init(rule);
+        logger.log(error);
     	
-    	var ObjectRuleField = fieldval_rules.FVRuleField.types['object'].class;
-        var object_rule_field = new ObjectRuleField(rule);
-        object_rule_field.init();
-        var error = object_rule_field.validate(params);
+    	vr.validate(params, function(error) {
+    		logger.log(JSON.stringify(rule, null, 4));
+    		logger.log(JSON.stringify(params, null, 4));
+    		logger.log(JSON.stringify(error, null, 4));
+    		
+    		var validator = new FieldVal(params, error);
 
-		logger.log(JSON.stringify(rule, null, 4));
-		logger.log(JSON.stringify(params, null, 4));
-		logger.log(JSON.stringify(error, null, 4));
-	
-		var validator = new FieldVal(params, error);
+    		callback(validator);
+        });
 
-		callback(validator);
+		
 	});
 }
 
@@ -108,61 +122,13 @@ MinoVal.prototype.get_type = function(name, callback) {
 			]
 		}
 	}, function(err, res) {
-		callback(err,res)
-	});
-}
-
-MinoVal.prototype.create_object_rule = function(name, display_name) {
-	return {
-		name: name,
-		display_name: display_name,
-		type: "object",
-		fields: []
-	}
-}
-
-MinoVal.prototype.find_field_in_object = function(name, rule) {
-	var minoval = this;
-	logger.log(name, rule)
-	if (rule.fields === undefined) {
-		return
-	}
-	for (var i=0; i < rule.fields.length; i++) {
-		var field = rule.fields[i]
-		if (name === field.name) {
-			return field
-		}
-	}
-}
-
-MinoVal.prototype.get_endpoint_rules_from_object = function(endpoint, object, result) {
-	var minoval = this;
-	logger.log(endpoint, object, result)
-	for (var key in endpoint) {
-		var value = endpoint[key];
-		if (typeof(value) === 'object') {
-
-			//Object - inspect each child field recursively
-			
-			var next_field = minoval.find_field_in_object(key, object);
-			if (next_field !== undefined) {
-				var next_result = minoval.create_object_rule(next_field.name, next_field.display_name);
-				result.fields.push(next_result)
-				minoval.get_endpoint_rules_from_object(value, next_field, next_result);
-			}
-
+		logger.log(err, res);
+		if (err) {
+			callback(err)
 		} else {
-
-			//Field - add to the rule
-			var next_field = minoval.find_field_in_object(key, object);
-			if (next_field !== undefined) {
-				if (typeof(value) === "string") {
-					next_field.name = value;
-				}
-				result.fields.push(next_field);
-			}
+			callback(null, res.objects[0]);
 		}
-	}
+	});
 }
 
 MinoVal.prototype.get_endpoint = function(name, callback) {
@@ -185,109 +151,127 @@ MinoVal.prototype.get_endpoint = function(name, callback) {
 			callback(null)
 			return;
 		}
-		var endpoint = res.objects[0].mino_type;
+		var endpoint = res.objects[0];
 
 		callback(err, endpoint);
 	});
 }
 
-MinoVal.prototype.get_endpoint_rule = function(name, callback) {
+MinoVal.prototype.get_rule = function(name, callback) {
 	var minoval = this;
-	minoval.get_endpoint(name, function(err, endpoint) {
-		logger.log(endpoint);
 
-		var waiting_for = 0;
-		
-		var result = minoval.create_object_rule(name, name);
-
-		for (var i in endpoint) {
-			waiting_for++;
-			(function(key) {
-
-				minoval.get_type(key, function(err, res){
-					var rule = res.objects[0].mino_type;
-					logger.log(key, rule, endpoint);
-					
-					var next_result = minoval.create_object_rule(rule.name, rule.dsplay_name);
-					result.fields.push(next_result);
-
-					minoval.get_endpoint_rules_from_object(endpoint[key], rule, next_result)
-
-					waiting_for--;
-					if (waiting_for == 0) {
-						logger.log(JSON.stringify(result, null, 4));
-						callback(result);
-					}
-				});
-			})(i);
+	minoval.get_rule_object(name, function(err, rule) {
+		if (err) {
+			callback(err);
+			return;
 		}
 
-	})
+		var vr = new FVRule();
+		var init_error = vr.init(rule);
+		if (init_error) {
+			callback(init_error)
+			return;
+		}
+
+		callback(null, vr);
+
+	});
 }
 
-MinoVal.prototype.save_endpoint = function(name, types, callback) {
+MinoVal.prototype.get_rule_object = function(name, callback) {
 	var minoval = this;
 
-	var exclude_unused_params = function(object) {
-	    for (var key in object) {
-	        if (object[key] === false) {
-	            delete object[key]
-	        } else if (typeof(object[key]) === 'object') {
-	            exclude_unused_params(object[key])
-	        }
-	    }
-
-	    for (var key in object) {
-	    	if (object[key] === null) {
-	    		delete(object[key]);
-	    	} else if (typeof(object[key]) === 'object' && Object.getOwnPropertyNames(object[key]).length == 0) {
-	            delete object[key]
-	        }
-	    }
+	var parts = name.split(".");
+	if (parts.length == 0  || !parts[0]) {
+		callback(errors.ENDPOINT_NOT_FOUND);
+	} else if (parts[parts.length-1] == "") {
+		parts = parts.slice(0, parts.length-1);
 	}
 
-	exclude_unused_params(types);
-	minoval.minodb.api.call({username:minoval.user},{
-	    "function": "get",
-	    parameters: {
-	        addresses: [
-	            "/"+minoval.user+"/endpoints/"+name,
-	        ]
-	    }
-	},function(err,response){
-	  	
-		var object = {
-            name: name,
-            path: "/"+minoval.user+"/endpoints/",
-            mino_type: types
-        };
+	logger.log(parts);
 
-        logger.log(err, response);
+	minoval.get_type(parts[0], function(err, type) {
+		logger.log(type);
 
-        if (response.objects[0] !== undefined && response.objects[0] !== null) {
-        	object['_id'] = response.objects[0]['_id']
-        }
+		var rule = type.mino_type;
+		for (var i=1; i<parts.length; i++) {
+			logger.log(i, rule.fields, parts[i]);
 
-		minoval.minodb.api.call({username:minoval.user},{
-		    "function": "save",
-		    parameters: {
-		        objects: [
-		            object
-		        ]
-		    }
-		},function(err,response){
-		    callback(err, response);
+			var found = false;
+			
+			for (var j=0; j<rule.fields.length; j++) {
+				if (rule.fields[j].name == parts[i]) {
+					rule = rule.fields[j];
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				rule = null;
+				break;	
+			}
+
+		}
+		logger.log(rule);
+		callback(null, rule);
+	})	
+}
+
+MinoVal.prototype.save_endpoint = function(object, callback) {
+	var minoval = this;
+
+	var err = MinoVal.validate_endpoint_data(object.mino_type);
+	if (err) {
+		callback(err)
+		return;
+	}
+
+	if (object.name == undefined) {
+		object.name = object.mino_type.name;
+	}
+	if (object.path == undefined) {
+		object.path = '/' + minoval.user + '/endpoints/'
+	}
+	logger.log(object);
+
+	minoval.minodb.get([object.path + object.name], function(err, res) {
+		logger.log(JSON.stringify(err, null, 4), res);
+
+		var db_object = res.objects[0];
+		if (db_object != null && object["_id"] !== db_object["_id"]) {
+			logger.log(errors);
+			callback(
+				new FieldVal(null)
+				.invalid("name", errors.ENDPOINT_ALREADY_EXISTS)
+				.end()
+			)
+			return;
+		}
+
+		object.name = object.mino_type.name;
+
+		logger.log(object);
+
+		minoval.minodb.save([object], function(err, res) {
+			logger.log(JSON.stringify(err, null, 4), res);
+			if (err) {
+				callback(err);
+				return;
+			}
+
+			callback(null, res);
 		})
-	})
+	});
 
 }
 
-MinoVal.prototype.get_types_rule_for_ui = function(callback) {
+MinoVal.prototype.get_types = function(callback) {
 	var minoval = this;
 
 	var types = {
 	    "name" : "types",
-	    "display_name" : "types",
+	    "display_name" : "Types",
 	    "type" : "object",
 	    "fields" : []
 	};
@@ -300,58 +284,12 @@ MinoVal.prototype.get_types_rule_for_ui = function(callback) {
 	        ]
 	    }
 	},function(err,types_res){
-
-	    var convert_object_fields_to_text = function(object, result) {
-	        logger.log(object, result);
-	        if (object.fields === undefined) {
-	            return;
-	        }
-
-	        for (var i=0; i<object.fields.length; i++) {
-	            var field = object.fields[i];
-	            if (field.type == 'object') {
-	                var new_result = {
-	                    name: field.name,
-	                    display_name: field.display_name,
-	                    type: "object",
-	                    fields: []
-	                }
-	                logger.log('new result', field, new_result);
-	                result.fields.push(new_result);
-	                convert_object_fields_to_text(field, new_result)
-	            } else {
-	                logger.log('new field', field)
-	                result.fields.push({
-	                    name: field.name,
-	                    display_name: field.display_name,
-	                    type: "text",
-	                    required: false
-	                })
-	            }
-	        }
-	    }
-
 	    for (var i=0; i<types_res.objects.length; i++) {
 	        var type = types_res.objects[i].mino_type
 	        types.fields.push(type);
 	    }
 	    logger.log('received types', JSON.stringify(types, null, 4))
-
-	    var text_types = {
-	        "name" : "types",
-	        "display_name" : "types",
-	        "type" : "object",
-	        "fields" : []
-	    }
-
-	    convert_object_fields_to_text(types, text_types);
-	    text_types.fields.push({
-	        name: "name",
-	        display_name: "Name",
-	        type: "text"
-	    })
-
-	    callback(null, text_types);
+	    callback(null, types);
 	    
 	});
 }
@@ -368,6 +306,23 @@ MinoVal.prototype.delete_endpoint = function(name, callback) {
 	},function(err,res){
 		callback(err, res);
 	});
+}
+
+MinoVal.validate_endpoint_data = function(data) {
+	var rule = new FVRule();
+	var type_error = rule.init(
+	    data,
+	    {
+	        need_name: true
+	        // allow_dots: false
+	    }
+	);
+
+	//Perform an extra check on the name
+	var validator = new FieldVal(data, type_error);
+	validator.get("name", BasicVal.string(true), BasicVal.start_with_letter(), BasicVal.no_whitespace());
+
+	return validator.end();
 }
 
 module.exports = MinoVal;

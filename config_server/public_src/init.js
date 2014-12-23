@@ -4,10 +4,13 @@
 @import("../../bower_components/fieldval-basicval/fieldval-basicval.js");
 @import("../../bower_components/fieldval-rules/fieldval-rules.js");
 @import("../../bower_components/fieldval-ui/fieldval-ui.js");
-@import("../../bower_components/fieldval-dateval/fieldval-dateval.js");
 @import("../../bower_components/fieldval-ui/themes/minimal.js");
-@import("pages/pages.js");
+@import("../../node_modules/MinoDB/default_plugins/browser_server/public_src/pages/BrowserPage/Browser/Views/TypeView/TypeField/TypeField.js");
+
+@import("../../common/MinovalRuleField.js");
 @import("common_elements/common_elements.js");
+@import("pages/pages.js");
+
 
 var page_title_append = "MinoVal";
 var header = new Header();

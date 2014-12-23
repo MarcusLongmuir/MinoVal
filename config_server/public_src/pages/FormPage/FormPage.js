@@ -23,7 +23,8 @@ FormPage.prototype.fetch_data = function() {
             return;
         }
 
-        var vr = new ValidationRule();
+        console.log(type_object);
+        var vr = new FVRule();
         var rule_error = vr.init(type_object);
         if(rule_error){
             console.error(rule_error);
@@ -32,35 +33,31 @@ FormPage.prototype.fetch_data = function() {
 
         var form = vr.create_form();
 
-        form.val({
-            user: {
-                id: 123,
-                first_name: 123,
-                last_name: 123,
-                Address: 123,
-                company_id: 123
-            },
-        })
+        console.log(form);
 
         page.element.append(
-            form.element.append(
-                $("<button />").text("Submit")
-            ),
+            form.element,
+            submit = $("<button />").text("Submit"),
             output = $("<pre />")
         )
 
-        form.on_submit(function(object){
+        submit.click(function() {
+            form.submit();
+        });
 
-            var error = vr.validate(object);
-          
-            if(error){
-                console.log(error);
-                form.error(error)
-                output.text('"error": '+JSON.stringify(error,null,4));
-            } else {
-                form.clear_errors();
-                output.text('"object": '+JSON.stringify(object,null,4));
-            }
+        form.on_submit(function(object){
+            console.log('FORM OBJECT', object);
+
+            vr.validate(object, function(error) {
+                if(error){
+                    console.log(error);
+                    form.error(error)
+                    output.text('"error": '+JSON.stringify(error,null,4));
+                } else {
+                    form.clear_errors();
+                    output.text('"object": '+JSON.stringify(object,null,4));
+                }
+            });
         })
     });
 }

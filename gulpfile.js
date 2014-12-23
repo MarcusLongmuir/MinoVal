@@ -57,12 +57,17 @@ gulp.task('watch', function(){
 
     setup_watcher('config_server');
     setup_watcher('example_server');
+    gulp.watch(['common/**/*.js'], ['js']);
+
 });
 
 gulp.task('nodemon', function () {
     nodemon({ script: 'server.js', watch: [
-        'server.js',
-        'node_modules/minodb/api/'
+        'minoval.js',
+        'errors.js',
+        'config_server/ConfigServer.js',
+        'common/',
+        'node_modules/minodb/'
     ], ext: 'js', ignore: ['node_modules/'] })
         .on('restart', function () {
             console.log('restarted!')
