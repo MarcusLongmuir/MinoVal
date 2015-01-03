@@ -100,6 +100,10 @@ MinoVal.prototype.create_folders = function(callback) {
 MinoVal.prototype.validate = function(name, params, callback) {
 	var minoval = this;
 	minoval.get_rule(name, function(err, rule) {
+		if (err) {
+			callback(err);
+			return;
+		}
 		var rule = rule.mino_type;
      	var vr = new FVRule();
      	var error = vr.init(rule);
@@ -111,7 +115,7 @@ MinoVal.prototype.validate = function(name, params, callback) {
 
     	vr.validate(params, function(error) {
     		var validator = new FieldVal(params, error);
-    		callback(error, validator);
+    		callback(null, validator);
         });
 
 		
