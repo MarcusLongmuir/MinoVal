@@ -111,7 +111,7 @@ MinoVal.prototype.validate = function(name, params, callback) {
 
     	vr.validate(params, function(error) {
     		var validator = new FieldVal(params, error);
-    		callback(error validator);
+    		callback(error, validator);
         });
 
 		
