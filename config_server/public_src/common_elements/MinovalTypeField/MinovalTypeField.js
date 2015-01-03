@@ -1,7 +1,8 @@
 extend(MinovalTypeField, TypeField);
 
-function MinovalTypeField(value, parent) {
+function MinovalTypeField(value, parent, types) {
 	var tf = this;
+	tf.types = types;
 	MinovalTypeField.superConstructor.call(this, value, parent);
 }
 
@@ -13,7 +14,7 @@ MinovalTypeField.prototype.update_type_fields = function() {
 
 	if (type == "minoval_field") {
 		tf.form.add_field("minoval_field", new MinovalField("Minoval field", {
-			types: types
+			types: tf.types
 		}));
 		tf.form.fields.minoval_field.val(tf.value.minoval_field);
 	}

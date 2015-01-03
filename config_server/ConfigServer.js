@@ -34,15 +34,34 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/get_types', function(req, res) {
-        minoval.get_types(function(err, types) {
-            
+        var types = {
+            "name" : "types",
+            "display_name" : "Types",
+            "type" : "object",
+            "fields" : []
+        };
+        
+        minoval.minodb.api.call({username:minoval.user},{
+            "function": "search",
+            parameters: {
+                paths: [
+                    "/Mino/types/"  
+                ]
+            }
+        },function(err,types_res){
+            for (var i=0; i<types_res.objects.length; i++) {
+                var type = types_res.objects[i].mino_type
+                types.fields.push(type);
+            }
+            logger.log('received types', JSON.stringify(types, null, 4))
+
             var json_response = {
                 types: types
             }
 
             if (req.body.name !== undefined) {
-                minoval.get_endpoint(req.body.name, function(err, endpoint) {
-                    json_response.endpoint = endpoint;
+                minoval.get_rule(req.body.name, function(err, rule) {
+                    json_response.rule = rule;
                     res.json(json_response);
                 })   
             } else {
@@ -51,11 +70,11 @@ function ConfigServer(minoval){
         });
     });
 
-    us.express_server.post('/save_endpoint', function(req, res) {
+    us.express_server.post('/save_rule', function(req, res) {
         logger.log(req.body)
 
         var object = req.body;
-        minoval.save_endpoint(object, function(error, response) {
+        minoval.save_rule(object, function(error, response) {
             logger.log(error, response)
             if (error) {
                 res.json(error, 400);
@@ -71,9 +90,9 @@ function ConfigServer(minoval){
         });
     });
 
-    us.express_server.post('/delete_endpoint', function(req, res) {
+    us.express_server.post('/delete_rule', function(req, res) {
         logger.log(req.body)
-        minoval.delete_endpoint(req.body.name, function(error, response) {
+        minoval.delete_rule(req.body.name, function(error, response) {
             logger.log(error, response);
             if (error) {
                 res.json(error)
@@ -83,17 +102,17 @@ function ConfigServer(minoval){
         });
     });    
 
-    us.express_server.post('/get_endpoints', function(req, res) {
+    us.express_server.post('/get_rules', function(req, res) {
         minoval.minodb.api.call({username:minoval.user},{
             "function": "search",
             parameters: {
                 paths: [
-                    "/"+minoval.user+"/endpoints/"  
+                    minoval.path
                 ]
             }
-        },function(err, endpoints_res){
-            logger.log(err, endpoints_res);
-            res.json(endpoints_res);
+        },function(err, rules){
+            logger.log(err, rules);
+            res.json(rules);
         });
     });
 

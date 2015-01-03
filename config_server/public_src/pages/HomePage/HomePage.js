@@ -7,7 +7,7 @@ function HomePage(req) {
 
     page.table = $("<table/>")
 
-    header.element.text("Endpoints");
+    header.element.text("Minoval rules");
 
     page.element.addClass("home_page").append(
       page.table,
@@ -21,7 +21,7 @@ function HomePage(req) {
 HomePage.prototype.fetch_data = function() {
     var page = this;
     console.log("fetching");
-    $.post(minoval_path + 'get_endpoints', function(res) {
+    $.post(minoval_path + 'get_rules', function(res) {
         console.log(res);
         page.table.empty();
         var objects = res.objects;
@@ -45,9 +45,9 @@ HomePage.prototype.fetch_data = function() {
                     $("<a/>").text("Edit").attr("href", minoval_path + "types/?name="+name).ajax_url()
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
-                        var name = $(this).attr("endpoint_name");
-                        page.delete_endpoint(name);
+                    $("<a/>").text("Delete").attr("href", "#").attr("rule_name", name).click(function() {
+                        var name = $(this).attr("rule_name");
+                        page.delete_rule(name);
                     })
                 )
             );
@@ -61,10 +61,10 @@ HomePage.prototype.fetch_data = function() {
     });
 }
 
-HomePage.prototype.delete_endpoint = function(name) {
+HomePage.prototype.delete_rule = function(name) {
     var page = this;
 
-    $.post(minoval_path + "delete_endpoint", {name: name}, function(res) {
+    $.post(minoval_path + "delete_rule", {name: name}, function(res) {
         page.fetch_data();
     });
 }

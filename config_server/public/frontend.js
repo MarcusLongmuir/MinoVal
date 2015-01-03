@@ -18271,7 +18271,6 @@ function TypeField(value, parent){
 	for(var name in tf.form.fields){
     	tf.base_fields[name] = true;
     }
-
 	tf.form.val(value);
 
     tf.update_title_name();
@@ -18309,10 +18308,8 @@ TypeField.prototype.update_type_fields = function(){
 
 	var type = tf.form.fields.type.val();
 
-	console.log("BASE FIELDS", tf.base_fields);
 	for(var name in tf.form.fields){
 		if(!tf.base_fields[name]){
-			console.log("REMOVED", tf.form.fields[name]);
 			tf.form.fields[name].remove();
 		}
 	}
@@ -18409,7 +18406,7 @@ MinovalRuleField.prototype.create_ui = function(parent, form){
 
 	field.ui_field = new FVTextField(field.name).val("Loading...").disable();
 
-	minoval.get_rule(field.minoval_field, function(err, vr) {
+	minoval.get_type_rule(field.minoval_field, function(err, vr) {
 		field.ui_field.remove();
 		vr.field.create_ui(parent, form);
 	});
@@ -18425,7 +18422,7 @@ MinovalRuleField.prototype.init = function() {
 	field.minoval_field = field.validator.get("minoval_field", BasicVal.string(true));
 
 	field.checks.push(function(value, emit, done) {
-		minoval.get_rule(field.minoval_field, function(err, vr) {
+		minoval.get_type_rule(field.minoval_field, function(err, vr) {
 			vr.validate(value, function(error) {
 				done(error);
 			});
@@ -18696,8 +18693,9 @@ MinovalField.prototype.remove = function() {
 }
 extend(MinovalTypeField, TypeField);
 
-function MinovalTypeField(value, parent) {
+function MinovalTypeField(value, parent, types) {
 	var tf = this;
+	tf.types = types;
 	MinovalTypeField.superConstructor.call(this, value, parent);
 }
 
@@ -18709,7 +18707,7 @@ MinovalTypeField.prototype.update_type_fields = function() {
 
 	if (type == "minoval_field") {
 		tf.form.add_field("minoval_field", new MinovalField("Minoval field", {
-			types: types
+			types: tf.types
 		}));
 		tf.form.fields.minoval_field.val(tf.value.minoval_field);
 	}
@@ -18725,7 +18723,7 @@ function HomePage(req) {
 
     page.table = $("<table/>")
 
-    header.element.text("Endpoints");
+    header.element.text("Minoval rules");
 
     page.element.addClass("home_page").append(
       page.table,
@@ -18739,7 +18737,7 @@ function HomePage(req) {
 HomePage.prototype.fetch_data = function() {
     var page = this;
     console.log("fetching");
-    $.post(minoval_path + 'get_endpoints', function(res) {
+    $.post(minoval_path + 'get_rules', function(res) {
         console.log(res);
         page.table.empty();
         var objects = res.objects;
@@ -18763,9 +18761,9 @@ HomePage.prototype.fetch_data = function() {
                     $("<a/>").text("Edit").attr("href", minoval_path + "types/?name="+name).ajax_url()
                 ),
                 $("<td/>").append(
-                    $("<a/>").text("Delete").attr("href", "#").attr("endpoint_name", name).click(function() {
-                        var name = $(this).attr("endpoint_name");
-                        page.delete_endpoint(name);
+                    $("<a/>").text("Delete").attr("href", "#").attr("rule_name", name).click(function() {
+                        var name = $(this).attr("rule_name");
+                        page.delete_rule(name);
                     })
                 )
             );
@@ -18779,10 +18777,10 @@ HomePage.prototype.fetch_data = function() {
     });
 }
 
-HomePage.prototype.delete_endpoint = function(name) {
+HomePage.prototype.delete_rule = function(name) {
     var page = this;
 
-    $.post(minoval_path + "delete_endpoint", {name: name}, function(res) {
+    $.post(minoval_path + "delete_rule", {name: name}, function(res) {
         page.fetch_data();
     });
 }
@@ -18805,14 +18803,14 @@ HomePage.prototype.remove = function() {
 HomePage.prototype.resize = function(resize_obj) {
     var page = this;
 }
-SAFE.extend(TypesPage, Page);
+SAFE.extend(RulePage, Page);
 
-function TypesPage(req) {
+function RulePage(req) {
     var page = this;
 
-    TypesPage.superConstructor.call(this);
+    RulePage.superConstructor.call(this);
 
-    header.element.text("Create/Edit Endpoint");
+    header.element.text("Create/Edit rule");
 
     page.table = $("<table/>")
 
@@ -18820,88 +18818,85 @@ function TypesPage(req) {
 
 }
 
-TypesPage.prototype.fetch_data = function() {
+RulePage.prototype.create_type_field = function(rule) {
+    var page = this;
+    if (rule == undefined) {
+        rule = {}
+    }
+
+    page.type_field = new MinovalTypeField(rule.mino_type, page.element, page.types);
+
+    page.element.append(
+        page.type_field.element,
+        page.submit = $("<button />").text("Submit"),
+        output = $("<pre />")
+    )
+
+    page.submit.click(function() {
+        page.type_field.form.submit();
+    })
+
+    page.type_field.form.on_submit(function(object) {
+        // var object = type_field.val();
+        console.log(object);
+        output.text('"object": '+JSON.stringify(object,null,4));
+
+        rule.mino_type = object;
+
+        var url = minoval_path + 'save_rule';
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(rule),
+            success: function(response) {
+                page.type_field.form.clear_errors();
+                SAFE.load_url(SAFE.path, true);
+                console.log(response);
+            },
+            error: function(err, response) {
+                console.log(err.responseJSON, response);
+                page.type_field.form.error(err.responseJSON)
+            }
+        })
+    })
+
+}
+
+RulePage.prototype.fetch_data = function() {
     var page = this;
     var query_string = get_query_params();
 
-    var data = {};
-    if (query_string.name !== undefined) {
-        data.name = query_string.name;
-    }
-
-    $.post(minoval_path + 'get_types', data, function(res) {
+    $.post(minoval_path + 'get_types', {name: query_string.name}, function(res) {
         console.log(res);
-        types = res.types;
+        page.types = res.types;
 
-        var endpoint = {};
-        
-        if (res.endpoint) {
-            endpoint = res.endpoint;
+        var rule = {};
+        if (res.rule) {
+            rule = res.rule;
         }
-
-        var type_field = new MinovalTypeField(endpoint.mino_type, page.element);
-
-        // type_field.form.val(res.endpoint);
-
-    	page.element.append(
-            type_field.element,
-            page.submit = $("<button />").text("Submit"),
-    		output = $("<pre />")
-    	)
-
-        page.submit.click(function() {
-            type_field.form.submit();
-        })
-
-        console.log(window.location.href, query_string);
-        console.log('\n\n', type_field.base_fields, '\n\n');
-
-        type_field.form.on_submit(function(object) {
-            // var object = type_field.val();
-            console.log(object);
-            output.text('"object": '+JSON.stringify(object,null,4));
-
-            endpoint.mino_type = object;
-
-			var path = location.pathname.split('/');
-			var url = minoval_path + 'save_endpoint';
-
-			$.ajax({
-		        type: "POST",
-		        url: url,
-		        contentType: "application/json; charset=utf-8",
-		        dataType: "json",
-		        data: JSON.stringify(endpoint),
-		        success: function(response) {
-                    type_field.form.clear_errors();
-		            SAFE.load_url(SAFE.path, true);
-                    console.log(response);
-		        },
-		        error: function(err, response) {
-		        	console.log(err.responseJSON, response);
-                    type_field.form.error(err.responseJSON)
-		        }
-		    })
-    	})
+        page.create_type_field(rule);
     });
 }
 
-TypesPage.prototype.get_title = function() {
+RulePage.prototype.get_title = function() {
     var page = this;
     return null;
 }
 
-TypesPage.prototype.init = function() {
+RulePage.prototype.init = function() {
     var page = this;
 
 }
 
-TypesPage.prototype.remove = function() {
+RulePage.prototype.remove = function() {
     var page = this;
 
 }
 
-TypesPage.prototype.resize = function(resize_obj) {
+RulePage.prototype.resize = function(resize_obj) {
     var page = this;
 }
 SAFE.extend(FormPage, Page);
@@ -18910,6 +18905,7 @@ function FormPage(req) {
     var page = this;
 
     page.name = req.params.name;
+    console.log(page.name);
 
     FormPage.superConstructor.call(this);
     
@@ -18922,7 +18918,8 @@ function FormPage(req) {
 
 FormPage.prototype.fetch_data = function() {
     var page = this;
-    minoval.get_endpoint(page.name, function(err, vr) {
+    console.log("FETCHING", page.name);
+    minoval.get_rule(page.name, function(err, vr) {
         
         var form = vr.create_form();
 
@@ -19007,7 +19004,7 @@ NotFoundPage.prototype.resize = function(resize_obj) {
 
 
 SAFE.add_url('/', HomePage);
-SAFE.add_url('/types', TypesPage);
+SAFE.add_url('/types', RulePage);
 SAFE.add_url("/form/:name", FormPage);
 
 

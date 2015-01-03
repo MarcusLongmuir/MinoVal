@@ -4,6 +4,7 @@ function FormPage(req) {
     var page = this;
 
     page.name = req.params.name;
+    console.log(page.name);
 
     FormPage.superConstructor.call(this);
     
@@ -16,7 +17,8 @@ function FormPage(req) {
 
 FormPage.prototype.fetch_data = function() {
     var page = this;
-    minoval.get_endpoint(page.name, function(err, vr) {
+    console.log("FETCHING", page.name);
+    minoval.get_rule(page.name, function(err, vr) {
         
         var form = vr.create_form();
 

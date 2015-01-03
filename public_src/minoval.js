@@ -26,9 +26,10 @@ MinoVal.create_fv_rule_from_object = function(object, callback) {
     }
 }
 
-MinoVal.prototype.get_rule = function(name, callback) {
+MinoVal.prototype.get_type_rule = function(name, callback) {
     var minoval = this;
-    $.post(minoval.path + '/get_rule', {name: name}, function(type_object) {
+    console.log("minoval.get_type_rule", name);
+    $.post(minoval.path + '/get_type_rule', {name: name}, function(type_object) {
         console.log(type_object);
         if (type_object === null) {
             callback({
@@ -41,13 +42,14 @@ MinoVal.prototype.get_rule = function(name, callback) {
     });
 }
 
-MinoVal.prototype.get_endpoint = function(name, callback) {
+MinoVal.prototype.get_rule = function(name, callback) {
     var minoval = this;
-    $.post(minoval.path + '/get_endpoint', {name: name}, function(type_object) {
+    console.log("minoval.get_rule", name);
+    $.post(minoval.path + '/get_rule', {name: name}, function(type_object) {
         console.log(type_object);
         if (type_object === null) {
             callback({
-                error_message: "Endpoint not found"
+                error_message: "Rule was not found"
             });
             return;
         } else if (type_object.error !== undefined) {

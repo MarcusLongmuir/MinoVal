@@ -26,9 +26,10 @@ MinoVal.create_fv_rule_from_object = function(object, callback) {
     }
 }
 
-MinoVal.prototype.get_rule = function(name, callback) {
+MinoVal.prototype.get_type_rule = function(name, callback) {
     var minoval = this;
-    $.post(minoval.path + '/get_rule', {name: name}, function(type_object) {
+    console.log("minoval.get_type_rule", name);
+    $.post(minoval.path + '/get_type_rule', {name: name}, function(type_object) {
         console.log(type_object);
         if (type_object === null) {
             callback({
@@ -41,13 +42,14 @@ MinoVal.prototype.get_rule = function(name, callback) {
     });
 }
 
-MinoVal.prototype.get_endpoint = function(name, callback) {
+MinoVal.prototype.get_rule = function(name, callback) {
     var minoval = this;
-    $.post(minoval.path + '/get_endpoint', {name: name}, function(type_object) {
+    console.log("minoval.get_rule", name);
+    $.post(minoval.path + '/get_rule', {name: name}, function(type_object) {
         console.log(type_object);
         if (type_object === null) {
             callback({
-                error_message: "Endpoint not found"
+                error_message: "Rule was not found"
             });
             return;
         } else if (type_object.error !== undefined) {
@@ -85,7 +87,7 @@ MinovalRuleField.prototype.create_ui = function(parent, form){
 
 	field.ui_field = new FVTextField(field.name).val("Loading...").disable();
 
-	minoval.get_rule(field.minoval_field, function(err, vr) {
+	minoval.get_type_rule(field.minoval_field, function(err, vr) {
 		field.ui_field.remove();
 		vr.field.create_ui(parent, form);
 	});
@@ -101,7 +103,7 @@ MinovalRuleField.prototype.init = function() {
 	field.minoval_field = field.validator.get("minoval_field", BasicVal.string(true));
 
 	field.checks.push(function(value, emit, done) {
-		minoval.get_rule(field.minoval_field, function(err, vr) {
+		minoval.get_type_rule(field.minoval_field, function(err, vr) {
 			vr.validate(value, function(error) {
 				done(error);
 			});

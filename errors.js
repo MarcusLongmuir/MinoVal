@@ -1,13 +1,13 @@
 module.exports = {
 
-	ENDPOINT_NOT_FOUND: {
+	RULE_NOT_FOUND: {
 		error: 10001,
-		error_message: "Endpoint not found"
+		error_message: "Rule not found"
 	},
 
-	ENDPOINT_ALREADY_EXISTS: {
+	RULE_ALREADY_EXISTS: {
 		error: 10002,
-		error_message: "Endpoint already exists"
+		error_message: "Rule already exists"
 	}
 
 }
