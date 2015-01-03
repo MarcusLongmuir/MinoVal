@@ -101,22 +101,17 @@ MinoVal.prototype.validate = function(name, params, callback) {
 	var minoval = this;
 	minoval.get_rule(name, function(err, rule) {
 		var rule = rule.mino_type;
-		logger.log(rule);
-		logger.log(fieldval_rules);
-		logger.log(JSON.stringify(fieldval_rules, null, 4));
-
      	var vr = new FVRule();
      	var error = vr.init(rule);
-        logger.log(error);
     	
-    	vr.validate(params, function(error) {
-    		logger.log(JSON.stringify(rule, null, 4));
-    		logger.log(JSON.stringify(params, null, 4));
-    		logger.log(JSON.stringify(error, null, 4));
-    		
-    		var validator = new FieldVal(params, error);
+     	if (error) {
+     		callback(error);
+     		return;
+     	}
 
-    		callback(validator);
+    	vr.validate(params, function(error) {
+    		var validator = new FieldVal(params, error);
+    		callback(error validator);
         });
 
 		
