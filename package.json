@@ -11,7 +11,7 @@
     "connect": "2.x",
     "tracer": "*",
     "minodb": "*",
-    "minosdk": "*",
+    "minosdk": "MarcusLongmuir/MinoSDK",
     "extend": "MarcusLongmuir/extend",
     "fieldval" : "0.1.5",
     "fieldval-basicval" : "0.1.4",
