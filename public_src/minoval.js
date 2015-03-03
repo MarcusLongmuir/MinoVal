@@ -62,6 +62,15 @@ MinoVal.prototype.get_rule = function(name, callback) {
     });
 }
 
+MinoVal.prototype.get_types = function(callback) {
+    var minoval = this;
+    
+    $.post(minoval.path + '/get_types', function(res) {
+        callback(null, res.types);
+    });   
+}
+
 minoval = new MinoVal();
 
-@import("../common/MinovalRuleField.js");
+@import("../common/MinoRuleField.js");
+@import("../common/MinovalField/MinovalField.js");
