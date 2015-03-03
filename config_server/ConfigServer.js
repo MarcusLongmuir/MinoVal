@@ -79,6 +79,43 @@ function ConfigServer(minoval){
         });
     });
 
+    us.express_server.post('/get_types', function(req, res) {
+        var types = {
+            "name" : "types",
+            "display_name" : "Types",
+            "type" : "object",
+            "fields" : []
+        };
+        
+        minoval.minodb.api.call({username:minoval.user},{
+            "function": "search",
+            parameters: {
+                paths: [
+                    "/Mino/types/"  
+                ]
+            }
+        },function(err,types_res){
+            for (var i=0; i<types_res.objects.length; i++) {
+                var type = types_res.objects[i].mino_type
+                types.fields.push(type);
+            }
+            logger.log('received types', JSON.stringify(types, null, 4))
+
+            var json_response = {
+                types: types
+            }
+
+            if (req.body.name !== undefined) {
+                minoval.get_rule(req.body.name, function(err, rule) {
+                    json_response.rule = rule;
+                    res.json(json_response);
+                })   
+            } else {
+                res.json(json_response);
+            }
+        });
+    });
+
 }
 
 module.exports = ConfigServer;
