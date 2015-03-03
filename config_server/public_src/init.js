@@ -7,7 +7,6 @@
 @import("../../bower_components/fieldval-ui/themes/minimal.js");
 @import("../../node_modules/MinoDB/default_plugins/browser_server/public_src/pages/BrowserPage/Browser/Views/TypeView/TypeField/TypeField.js");
 
-@import("../../common/MinoRuleField.js");
 @import("common_elements/common_elements.js");
 @import("pages/pages.js");
 
