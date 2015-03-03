@@ -79,8 +79,6 @@ if((typeof require) === 'function'){
     // minoval = require('../minoval.js').global_client;
     // minoval = new MinoVal({user:"testuser"});
     logger = require('tracer').console();
-    globals = require('../globals');
-    minoval = globals.minoval_client;
     FieldVal = require("fieldval");
     BasicVal = FieldVal.BasicVal;
 }
@@ -139,7 +137,10 @@ MinoRuleField.create_editor_ui = function(value, form) {
 }
 
 if (typeof module != 'undefined') {
-    module.exports = MinoRuleField;
+    module.exports.field = MinoRuleField;
+    module.exports.init = function(local_minoval) {
+    	minoval = local_minoval;
+    };
 }
 
 FVRuleField.add_field_type({

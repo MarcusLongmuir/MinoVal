@@ -8,7 +8,6 @@ var FVRule = require('minodb').FVRule;
 var FVRuleField = require('minodb').FVRule.FVRuleField;
 var BasicVal = require('fieldval-basicval');
 var errors = require('./errors');
-var globals = require('./globals');
 
 var ConfigServer = require('./config_server/ConfigServer');
 
@@ -87,8 +86,6 @@ function MinoVal(options) {
         });
     });
 
-    globals.minoval_client = minoval;
-    require('./common/MinoRuleField.js');
 }
 
 MinoVal.global_client = "test";
@@ -114,10 +111,12 @@ MinoVal.prototype.init = function(minodb, callback){
     minodb.internal_server().use(minoval.main_server_path, minoval.main_server);
     minoval.create_folders(callback);
 
+    require('./common/MinoRuleField.js').init(minoval);
+
     minodb.add_field_type({
     	name: "mino_field",
     	display_name: "Mino field",
-    	class: require('./common/MinoRuleField.js')
+    	class: require('./common/MinoRuleField.js').field
     })
 }
 
