@@ -13492,9 +13492,7 @@ var FieldVal = (function(){
         fv.async_waiting = 0;
 
         fv.validating = validating;
-        fv.missing_keys = {};
         fv.invalid_keys = {};
-        fv.unrecognized_keys = {};
         fv.recognized_keys = {};
 
         //Top level errors - added using .error() 
@@ -13530,9 +13528,6 @@ var FieldVal = (function(){
                         if(validating.hasOwnProperty(j)) {
                             fv.recognized_keys[j] = true;
                         }
-                    }
-                    if(key_error.missing){
-                        fv.missing_keys = key_error.missing;
                     }
                     if(key_error.unrecognized){
                         fv.unrecognized_keys = key_error.unrecognized;
@@ -13591,6 +13586,38 @@ var FieldVal = (function(){
         return new FieldVal(current_value,current_error);
     };
 
+    FieldVal.get_error = function(){
+        var keys;
+        var first_argument = arguments[0];
+        var last_argument = arguments[arguments.length-1];
+
+        if(typeof last_argument !== "object" || Array.isArray(last_argument)){
+            throw new Error("Last argument to .get_error is not an error");
+        }
+        
+        if(Array.isArray(first_argument)){
+            keys = first_argument;
+        } else {
+            keys = [];
+            for(var i=0; i < arguments.length-1; i++){
+                keys.push(arguments[i]);
+            }
+        }
+
+        var current_error = last_argument;
+        for(var k = 0; k < keys.length; k++){
+            var this_key = keys[k];
+            if(current_error){
+                var invalid = current_error.invalid;
+                if(invalid){
+                    current_error = invalid[this_key];
+                }
+            }
+        }
+
+        return current_error;
+    };
+
     FieldVal.prototype.error = function(){
         var fv = this;
 
@@ -13611,17 +13638,6 @@ var FieldVal = (function(){
             } else {
 
                 var key_name = arguments[0];
-
-                var error_code = error.error;
-                if(error_code!==undefined){
-                    if(error_code===FieldVal.FIELD_MISSING){
-                        fv.missing_keys[key_name] = error;
-                        return fv;
-                    } else if(error_code===FieldVal.FIELD_UNRECOGNIZED){
-                        fv.unrecognized_keys[key_name] = error;
-                        return fv;
-                    }
-                }
 
                 fv.invalid_keys[key_name] = FieldVal.add_to_invalid(
                     error, 
@@ -13661,29 +13677,14 @@ var FieldVal = (function(){
             if(current_error instanceof FieldVal){
                 current_error.invalid(this_key, new_error);
             } else {
-                var error_code = error.error;
-
-                if(error_code===FieldVal.FIELD_MISSING){
-                    if(!current_error.missing){
-                        current_error.missing = {};
-                    }
-                    current_error.missing[this_key] = error;
-                } else if(error_code===FieldVal.FIELD_UNRECOGNIZED){
-                    if(!current_error.unrecognized){
-                        current_error.unrecognized = {};
-                    }
-                    current_error.unrecognized[this_key] = error;
-                } else {
-
-                    if(!current_invalid){
-                        current_invalid = current_error.invalid = {};
-                    }
-
-                    current_invalid[this_key] = FieldVal.add_to_invalid(
-                        new_error, 
-                        current_invalid[this_key]
-                    );
+                if(!current_invalid){
+                    current_invalid = current_error.invalid = {};
                 }
+
+                current_invalid[this_key] = FieldVal.add_to_invalid(
+                    new_error, 
+                    current_invalid[this_key]
+                );
             }
 
             current_error = new_error;
@@ -13723,6 +13724,13 @@ var FieldVal = (function(){
 
         var value = fv.validating[field_name];
         fv.recognized_keys[field_name] = true;
+        var existing_invalid = fv.invalid_keys[field_name];
+        if(existing_invalid!==undefined){
+            if(existing_invalid.error!==undefined && existing_invalid.error===FieldVal.FIELD_UNRECOGNIZED){
+                //This key was previously unrecognized, but is now being checked - remove the error
+                delete fv.invalid_keys[field_name];
+            }
+        }
 
         var use_checks_res = FieldVal.use_checks(value, checks, {
             validator: fv, 
@@ -13776,18 +13784,13 @@ var FieldVal = (function(){
     FieldVal.prototype.missing = function (field_name, flags) {
         var fv = this;
 
-        fv.missing_keys[field_name] = FieldVal.create_error(FieldVal.MISSING_ERROR, flags);
-        return fv;
+        return fv.error(field_name, FieldVal.create_error(FieldVal.MISSING_ERROR, flags));
     };
 
-    FieldVal.prototype.unrecognized = function (field_name) {
+    FieldVal.prototype.unrecognized = function (field_name, flags) {
         var fv = this;
 
-        fv.unrecognized_keys[field_name] = {
-            error_message: FieldVal.FIELD_UNRECOGNIZED_STRING,
-            error: FieldVal.FIELD_UNRECOGNIZED
-        };
-        return fv;
+        return fv.error(field_name, FieldVal.create_error(FieldVal.UNRECOGNIZED_ERROR, flags));
     };
 
     FieldVal.prototype.recognized = function (field_name) {
@@ -13822,7 +13825,7 @@ var FieldVal = (function(){
 
         if(fv.async_waiting<=0){
             if(fv.end_callback){
-                fv.end_callback(fv.generate_response(), fv.recognized_keys);
+                fv.end_callback(fv.generate_response());
             }
         }
     };
@@ -13835,6 +13838,7 @@ var FieldVal = (function(){
         var has_error = false;
 
         var returning_unrecognized = {};
+        var returning_invalid = {};
 
         //Iterate through manually unrecognized keys
         var key;
@@ -13849,25 +13853,25 @@ var FieldVal = (function(){
         var i, auto_key;
         for (i = 0; i < auto_unrecognized.length; i++) {
             auto_key = auto_unrecognized[i];
-            if (!returning_unrecognized[auto_key]) {
-                returning_unrecognized[auto_key] = {
-                    error_message: "Unrecognized field.",
-                    error: FieldVal.FIELD_UNRECOGNIZED
-                };
-            }
+            returning_invalid[auto_key] = {
+                error_message: "Unrecognized field.",
+                error: FieldVal.FIELD_UNRECOGNIZED
+            };
+            has_error = true;
         }
 
-        if (!is_empty(fv.missing_keys)) {
-            returning.missing = fv.missing_keys;
-            has_error = true;
-        }
         if (!is_empty(fv.invalid_keys)) {
-            returning.invalid = fv.invalid_keys;
+            for(var k in fv.invalid_keys){
+                if(fv.invalid_keys.hasOwnProperty(k)){
+                    returning_invalid[k] = fv.invalid_keys[k];
+                }
+            }
             has_error = true;
         }
-        if (!is_empty(returning_unrecognized)) {
-            returning.unrecognized = returning_unrecognized;
-            has_error = true;
+
+
+        if(has_error){
+            returning.invalid = returning_invalid;
         }
 
         if (has_error) {
@@ -13907,7 +13911,7 @@ var FieldVal = (function(){
             fv.end_callback = callback;
 
             if(fv.async_waiting<=0){
-                callback(fv.generate_response(), fv.recognized_keys);
+                callback(fv.generate_response());
             }
         } else {
             return fv.generate_response();
@@ -13921,7 +13925,7 @@ var FieldVal = (function(){
             fv.end(callback);
         } else {
             if(fv.async_waiting>0){
-                return [fv.generate_response(), fv.recognized_keys];
+                return [fv.generate_response()];
             }
         }
     };
@@ -13945,7 +13949,7 @@ var FieldVal = (function(){
 
     FieldVal.INCORRECT_TYPE_ERROR = function (expected_type, type) {
         return {
-            error_message: "Incorrect field type. Expected " + expected_type + ".",
+            error_message: "Incorrect field type. Expected " + expected_type + ", but received "+type+".",
             error: FieldVal.INCORRECT_FIELD_TYPE,
             expected: expected_type,
             received: type
@@ -13956,6 +13960,13 @@ var FieldVal = (function(){
         return {
             error_message: FieldVal.FIELD_MISSING_STRING,
             error: FieldVal.FIELD_MISSING
+        };
+    };
+
+    FieldVal.UNRECOGNIZED_ERROR = function(){
+        return {
+            error_message: FieldVal.FIELD_UNRECOGNIZED_STRING,
+            error: FieldVal.FIELD_UNRECOGNIZED
         };
     };
 
@@ -14068,7 +14079,7 @@ var FieldVal = (function(){
                 if (response === FieldVal.REQUIRED_ERROR) {
 
                     if (shared_options.field_name!==undefined) {
-                        shared_options.validator.missing(shared_options.field_name, flags);
+                        shared_options.validator.error(shared_options.field_name, FieldVal.create_error(FieldVal.MISSING_ERROR, flags));
                         use_check_done();
                         return;
                     } else {
@@ -15250,7 +15261,7 @@ var FieldVal = (function(){
                     var emitted_value;
                     var option_error = FieldVal.use_checks(value, option, null, null, function(emitted){
                         emitted_value = emitted;
-                    })
+                    });
                     if(option_error===FieldVal.ASYNC){
                         throw new Error(".multiple used with async checks, use .multiple_async.");
                     }
@@ -15378,642 +15389,8 @@ if ('undefined' !== typeof module) {
     BasicVal = FieldVal.BasicVal;
     DateVal = FieldVal.DateVal;
 }
-var BasicVal = (function(){
+var BasicVal = FieldVal.BasicVal;
 
-    /* istanbul ignore if */
-    if((typeof require) === 'function'){
-        FieldVal = require("fieldval");
-    }
-
-    if (!Array.prototype.indexOf) {
-        Array.prototype.indexOf = function(searchElement, fromIndex) {
-            var k;
-            if (this == null) {
-                throw new TypeError('"this" is null or not defined');
-            }
-
-            var O = Object(this);
-            var len = O.length >>> 0;
-            if (len === 0) {
-                return -1;
-            }
-            var n = +fromIndex || 0;
-            if (Math.abs(n) === Infinity) {
-                n = 0;
-            }
-            if (n >= len) {
-                return -1;
-            }
-            k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-            while (k < len) {
-                var kValue;
-                if (k in O && O[k] === searchElement) {
-                    return k;
-                }
-                k++;
-            }
-            return -1;
-        };
-    }
-
-    var BasicVal = {
-        errors: {
-            too_short: function(min_len) {
-                return {
-                    error: 100,
-                    error_message: "Length is less than " + min_len
-                };
-            },
-            too_long: function(max_len) {
-                return {
-                    error: 101,
-                    error_message: "Length is greater than " + max_len
-                };
-            },
-            too_small: function(min_val) {
-                return {
-                    error: 102,
-                    error_message: "Value is less than " + min_val
-                };
-            },
-            too_large: function(max_val) {
-                return {
-                    error: 103,
-                    error_message: "Value is greater than " + max_val
-                };
-            },
-            not_in_list: function() {
-                return {
-                    error: 104,
-                    error_message: "Value is not a valid choice"
-                };
-            },
-            cannot_be_empty: function() {
-                return {
-                    error: 105,
-                    error_message: "Value cannot be empty."
-                };
-            },
-            no_prefix: function(prefix) {
-                return {
-                    error: 106,
-                    error_message: "Value does not have prefix: " + prefix
-                };
-            },
-            invalid_email: function() {
-                return {
-                    error: 107,
-                    error_message: "Invalid email address format."
-                };
-            },
-            invalid_url: function() {
-                return {
-                    error: 108,
-                    error_message: "Invalid url format."
-                };
-            },
-            incorrect_length: function(len){
-                return {
-                    error: 109,
-                    error_message: "Length is not equal to " + len
-                };
-            },
-            no_suffix: function(suffix) {
-                return {
-                    error: 110,
-                    error_message: "Value does not have suffix: " + suffix
-                };
-            },
-            //111 in DateVal
-            //112 in DateVal
-            not_equal: function(match){
-                return {
-                    error: 113,
-                    error_message: "Not equal to " + match + ".",
-
-                };
-            },
-            //114 in DateVal
-            no_valid_option: function(){//Should be overriden in most cases
-                return {
-                    error: 115,
-                    error_message: "None of the options were valid.",
-                };
-            },
-            contains_whitespace: function(){
-                return {
-                    error: 116,
-                    error_message: "Contains whitespace."
-                };
-            },
-            must_start_with_letter: function(){
-                return {
-                    error: 117,
-                    error_message: "Must start with a letter."
-                };  
-            },
-            value_in_list: function() {
-                return {
-                    error: 104,
-                    error_message: "Value not allowed"
-                };
-            }
-        },
-        equal_to: function(match, flags){
-            var check = function(value) {
-                if (value!==match) {
-                    return FieldVal.create_error(BasicVal.errors.not_equal, flags, match);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        merge_required_and_flags: function(required, flags){
-            if((typeof required)==="object"){
-                flags = required;
-            } else {
-                if(!flags){
-                    flags = {};
-                }
-                flags.required = required;
-            }
-            return flags;
-        },
-        integer: function(required, flags){
-            return FieldVal.type("integer",BasicVal.merge_required_and_flags(required, flags));
-        },
-        number: function(required, flags){
-            return FieldVal.type("number",BasicVal.merge_required_and_flags(required, flags));
-        },
-        array: function(required, flags){
-            return FieldVal.type("array",BasicVal.merge_required_and_flags(required, flags));
-        },
-        object: function(required, flags){
-            return FieldVal.type("object",BasicVal.merge_required_and_flags(required, flags));
-        },
-        float: function(required, flags){
-            return FieldVal.type("float",BasicVal.merge_required_and_flags(required, flags));
-        },
-        boolean: function(required, flags){
-            return FieldVal.type("boolean",BasicVal.merge_required_and_flags(required, flags));
-        },
-        string: function(required, flags){
-            flags = BasicVal.merge_required_and_flags(required, flags);
-            var check = function(value, emit) {
-
-                var core_check = FieldVal.type("string",flags);
-                if(typeof core_check === 'object'){
-                    //Passing flags turns the check into an object
-                    core_check = core_check.check;
-                }
-
-                //Passing emit means that the value can be changed
-                var error = core_check(value,emit);
-                if(error) return error;
-
-                if(!flags || flags.trim!==false){//If not explicitly false
-                    value = value.trim();
-                }
-                if (value.length === 0) {
-                    if(required || required===undefined){
-                        return FieldVal.REQUIRED_ERROR;
-                    } else {
-                        return FieldVal.NOT_REQUIRED_BUT_MISSING;
-                    }
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        length: function(len, flags) {
-            var check = function(value) {
-                if (value.length!==len) {
-                    return FieldVal.create_error(BasicVal.errors.incorrect_length, flags, len);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        min_length: function(min_len, flags) {
-            var check = function(value) {
-                if (value.length < min_len) {
-                    return FieldVal.create_error(BasicVal.errors.too_short, flags, min_len);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        max_length: function(max_len, flags) {
-            var check = function(value) {
-                if (value.length > max_len) {
-                    return FieldVal.create_error(BasicVal.errors.too_long, flags, max_len);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        no_whitespace: function(flags) {
-            var check = function(value) {
-                if (/\s/.test(value)){
-                    return FieldVal.create_error(BasicVal.errors.contains_whitespace, flags, max_len);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        minimum: function(min_val, flags) {
-            var check = function(value) {
-                if (value < min_val) {
-                    return FieldVal.create_error(BasicVal.errors.too_small, flags, min_val);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        maximum: function(max_val, flags) {
-            var check = function(value) {
-                if (value > max_val) {
-                    return FieldVal.create_error(BasicVal.errors.too_large, flags, max_val);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        range: function(min_val, max_val, flags) {
-            //Effectively combines minimum and maximum
-            var check = function(value){
-                if (value < min_val) {
-                    return FieldVal.create_error(BasicVal.errors.too_small, flags, min_val);
-                } else if (value > max_val) {
-                    return FieldVal.create_error(BasicVal.errors.too_large, flags, max_val);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        one_of: function(array, flags) {
-            var valid_values = [];
-            if(Object.prototype.toString.call(array) === '[object Array]'){
-                for(var i = 0; i < array.length; i++){
-                    var option = array[i];
-                    if((typeof option) === 'object'){
-                        valid_values.push(option[0]);
-                    } else {
-                        valid_values.push(option);
-                    }
-                }
-            } else {
-                for(var k in array){
-                    valid_values.push(k);
-                }
-            }
-            var check = function(value) {
-                if (valid_values.indexOf(value) === -1) {
-                    return FieldVal.create_error(BasicVal.errors.not_in_list, flags);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        not_one_of: function(array, flags) {
-            var valid_values = [];
-            if(Object.prototype.toString.call(array) === '[object Array]'){
-                for(var i = 0; i < array.length; i++){
-                    var option = array[i];
-                    if((typeof option) === 'object'){
-                        valid_values.push(option[0]);
-                    } else {
-                        valid_values.push(option);
-                    }
-                }
-            } else {
-                for(var k in array){
-                    valid_values.push(k);
-                }
-            }
-            var check = function(value) {
-                if (valid_values.indexOf(value) !== -1) {
-                    return FieldVal.create_error(BasicVal.errors.value_in_list, flags);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        not_empty: function(trim, flags) {
-            var check = function(value) {
-                if (trim) {
-                    if (value.trim().length === 0) {
-                        if(typeof flags.error){
-                        }
-                        return FieldVal.create_error(BasicVal.errors.cannot_be_empty, flags);
-                    }
-                } else {
-                    if (value.length === 0) {
-                        return FieldVal.create_error(BasicVal.errors.cannot_be_empty, flags);
-                    }
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        prefix: function(prefix, flags) {
-            var check = function(value) {
-                if (value.length >= prefix.length) {
-                    if (value.substring(0, prefix.length) != prefix) {
-                        return FieldVal.create_error(BasicVal.errors.no_prefix, flags, prefix);
-                    }
-                } else {
-                    return FieldVal.create_error(BasicVal.errors.no_prefix, flags, prefix);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        start_with_letter: function(flags) {
-            var check = function(value) {
-                if (value.length > 0) {
-                    var char_code = value.charCodeAt(0);
-                    if( !((char_code >= 65 && char_code <= 90) || (char_code >= 97 && char_code <= 122))){
-                        return FieldVal.create_error(BasicVal.errors.must_start_with_letter, flags);
-                    }
-                } else {
-                    return FieldVal.create_error(BasicVal.errors.must_start_with_letter, flags);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        suffix: function(suffix, flags) {
-            var check = function(value) {
-                if (value.length >= suffix.length) {
-                    if (value.substring(value.length-suffix.length, value.length) != suffix) {
-                        return FieldVal.create_error(BasicVal.errors.no_suffix, flags, suffix);
-                    }
-                } else {
-                    return FieldVal.create_error(BasicVal.errors.no_suffix, flags, suffix);
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        each: function(on_each, flags) {
-            var check = function(array, stop) {
-                var validator = new FieldVal(null);
-                for (var i = 0; i < array.length; i++) {
-                    var value = array[i];
-
-
-                    var res = on_each(value,i);
-                    if (res === FieldVal.REQUIRED_ERROR){
-                        validator.missing("" + i);
-                    } else if (res != null) {
-                        validator.invalid("" + i, res);
-                    }
-                }
-                var error = validator.end();
-                if(error!=null){
-                    return error;
-                }
-            }
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        each_async: function(on_each, flags) {
-            var check = function(array, emit, callback) {
-                
-                var validator = new FieldVal(null);
-                var i = 0;
-                var do_possible = function(){
-                    i++;
-                    if(i>array.length){
-                        callback(validator.end());
-                        return;
-                    }
-                    var value = array[i-1];
-
-                    FieldVal.use_checks(value, [function(value, emit){
-                        on_each(value,i,emit,callback);
-                    }], {
-                        field_name: ""+i,
-                        validator: validator,
-                        emit: function(emitted_value){
-                            array[i-1] = emitted_value;
-                        }
-                    }, function(response){
-                        if (response !== undefined) {
-                            validator.invalid("" + i, response);
-                        }
-                        do_possible();
-                    });
-                }
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        multiple: function(possibles, flags){
-
-            possibles = possibles || [];
-            if(possibles.length===0){
-                console.error("BasicVal.multiple called without possibles.");
-            }
-            
-            var check = function(value, emit){
-                for(var i = 0; i < possibles.length; i++){
-                    var option = possibles[i];
-            
-                    var emitted_value;
-                    var option_error = FieldVal.use_checks(value, option, null, null, function(emitted){
-                        emitted_value = emitted;
-                    })
-                    if(!option_error){
-                        if(emitted_value!==undefined){
-                            emit(emitted_value);
-                        }
-                        return null;
-                    }
-                }
-                return FieldVal.create_error(BasicVal.errors.no_valid_option, flags);
-            }
-            if(flags){
-                flags.check = check;
-                return flags
-            }
-            return {
-                check: check
-            }
-        },
-        multiple_async: function(possibles, flags){
-
-            possibles = possibles || [];
-            if(possibles.length===0){
-                console.error("BasicVal.multiple_async called without possibles.");
-                return;
-            }
-
-            var to_return;
-            var check = function(value, emit, callback){
-                var emitted_value;
-                var emit_for_check = function(emitted){
-                    emitted_value = emitted;
-                };
-                var i = 0;
-                var do_possible = function(){
-                    i++;
-                    if(i>possibles.length){
-                        callback(FieldVal.create_error(BasicVal.errors.no_valid_option, flags));
-                        return;
-                    }
-                    var option = possibles[i-1];
-
-                    FieldVal.use_checks(value, option, {
-                        field_name: null,
-                        validator: null,
-                        emit: emit_for_check
-                    }, function(response){
-                        if(response===undefined){
-                            callback(undefined);//Success
-                        } else {
-                            do_possible();
-                        }
-                    });
-                }
-                do_possible();
-                return to_return;
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        email: function(flags){
-            var check = function(value) {
-                var re = BasicVal.email_regex;
-                if(!re.test(value)){
-                    return FieldVal.create_error(BasicVal.errors.invalid_email, flags);
-                } 
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        },
-        url: function(flags){
-            var check = function(value) {
-                var re = BasicVal.url_regex;
-                if(!re.test(value)){
-                    return FieldVal.create_error(BasicVal.errors.invalid_url, flags);
-                } 
-            };
-            if(flags){
-                flags.check = check;
-                return flags;
-            }
-            return {
-                check: check
-            };
-        }
-    };
-
-    BasicVal.email_regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    BasicVal.url_regex = /^(https?):\/\/(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(:[1-9][0-9]+)?(\/)?([\/?].+)?$/;
-
-    return BasicVal;
-}).call();
-
-if (typeof module != 'undefined') {
-    module.exports = BasicVal;
-}
 //Used to subclass Javascript classes
 function extend(sub, sup) {
 	function emptyclass() {}
@@ -17503,8 +16880,12 @@ FVField.prototype.output = function(do_output){
     return field;
 }
 
-FVField.prototype.did_change = function(){
+FVField.prototype.did_change = function(options){
     var field = this;
+
+    if (options === undefined) {
+        options = {}
+    }   
 
     var val = field.val();
 
@@ -17513,6 +16894,11 @@ FVField.prototype.did_change = function(){
 
         callback(val);
     }
+
+    if (field.parent && !options.ignore_parent_change) {
+        field.parent.did_change();
+    }
+
     return field;
 }
 
@@ -17739,8 +17125,10 @@ FVTextField.prototype.blur = function() {
 
 FVTextField.numeric_regex = /^\d+(\.\d+)?$/;
 
-FVTextField.prototype.val = function(set_val) {
+FVTextField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {}
 
     if (arguments.length===0) {
         var value = field.input.val();
@@ -17753,6 +17141,11 @@ FVTextField.prototype.val = function(set_val) {
         return value;
     } else {
         field.input.val(set_val);
+        
+        if (!options.ignore_change) {
+            field.did_change(options);
+        }
+
         return field;
     }
 }
@@ -17807,13 +17200,18 @@ FVDisplayField.replace_line_breaks = function(string){
     return htmls.join("<br>");
 }
 
-FVDisplayField.prototype.val = function(set_val) {
+FVDisplayField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {}
 
     if (arguments.length===0) {
         return field.input.text();
     } else {
         field.input.html(FVDisplayField.replace_line_breaks(set_val));
+        if (!options.ignore_change) {
+            field.did_change(options);
+        }
         return field;
     }
 }
@@ -18125,8 +17523,10 @@ FVChoiceField.prototype.value_to_text = function(value){
     return null;
 }
 
-FVChoiceField.prototype.select_option = function(choice_option, ignore_change){
+FVChoiceField.prototype.select_option = function(choice_option, options){
     var field = this;
+
+    options = options || {};
 
     if(field.selected_value){
         field.selected_value.remove_selected();
@@ -18144,8 +17544,8 @@ FVChoiceField.prototype.select_option = function(choice_option, ignore_change){
     
     field.filter_input.blur().val("");
     
-    if(!ignore_change){
-        field.did_change();
+    if(!options.ignore_change){
+        field.did_change(options);
     }
 }
 
@@ -18259,7 +17659,7 @@ FVChoiceField.prototype.blur = function() {
     return field;
 }
 
-FVChoiceField.prototype.val = function(set_val) {
+FVChoiceField.prototype.val = function(set_val, options) {
     var field = this;
 
     if (arguments.length===0) {
@@ -18272,7 +17672,7 @@ FVChoiceField.prototype.val = function(set_val) {
             for(var i = 0; i < field.option_array.length; i++){
                 var choice_option = field.option_array[i];
                 if(set_val === choice_option.get_value()){
-                    field.select_option(choice_option,true);
+                    field.select_option(choice_option, options);
                     break;
                 }
             }
@@ -18407,8 +17807,10 @@ FVDateField.prototype.blur = function() {
     return field;
 }
 
-FVDateField.prototype.val = function(set_val) {
+FVDateField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {};
 
     if (arguments.length===0) {
 
@@ -18460,6 +17862,10 @@ FVDateField.prototype.val = function(set_val) {
                     input.val(as_components[i]);
                 }
             }
+
+            if (!options.ignore_change) {
+                field.did_change(options);
+            }
         }
 
         return field;
@@ -18506,8 +17912,10 @@ FVBooleanField.prototype.blur = function() {
     return field;
 }
 
-FVBooleanField.prototype.val = function(set_val) {
+FVBooleanField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {}
 
     if (arguments.length===0) {
         return field.input.is(":checked")
@@ -18518,6 +17926,11 @@ FVBooleanField.prototype.val = function(set_val) {
             set_val = false;
         }
        	field.input.prop('checked', set_val);
+        
+        if (!options.ignore_change) {
+            field.did_change(options);
+        }
+
         return field;
     }
 }
@@ -18727,8 +18140,10 @@ FVObjectField.prototype.clear_errors = function(){
 	field.error(null);
 }
 
-FVObjectField.prototype.val = function(set_val) {
+FVObjectField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {}
 
     if (arguments.length===0) {
     	var compiled = {};
@@ -18748,9 +18163,12 @@ FVObjectField.prototype.val = function(set_val) {
     	for(var i in set_val){
     		var inner_field = field.fields[i];
             if(inner_field){
-        		inner_field.val(set_val[i]);
+        		inner_field.val(set_val[i], {ignore_parent_change: true});
             }
     	}
+        if (!options.ignore_change) {
+            field.did_change(options);
+        }
         return field;
     }
 }
@@ -19328,8 +18746,10 @@ FVArrayField.prototype.error = function(error) {
     }
 }
 
-FVArrayField.prototype.val = function(set_val) {
+FVArrayField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {};
 
     if (arguments.length===0) {
     	var compiled = [];
@@ -19358,8 +18778,13 @@ FVArrayField.prototype.val = function(set_val) {
                 if(!inner_field){//A field wasn't returned by the new_field function
                     inner_field = field.fields[i];
                 }
-                inner_field.val(set_val[i]);
+                inner_field.val(set_val[i], {ignore_parent_change: true});
+
         	}
+            
+            if (!options.ignore_change) {
+                field.did_change(options);
+            }
         }
         return field;
     }
@@ -19617,8 +19042,10 @@ FVKeyValueField.prototype.error = function(error) {
     }
 }
 
-FVKeyValueField.prototype.val = function(set_val) {
+FVKeyValueField.prototype.val = function(set_val, options) {
     var field = this;
+
+    options = options || {};
 
     if (arguments.length===0) {
     	var compiled = {};
@@ -19657,10 +19084,14 @@ FVKeyValueField.prototype.val = function(set_val) {
                              }
                          }
 	                }
-	                inner_field.val(set_val[i]);
+	                inner_field.val(set_val[i], {ignore_parent_change: true});
 	                inner_field.name_val(i);
 				}
         	}
+        }
+
+        if (!options.ignore_change) {
+            field.did_change(options);
         }
         return field;
     }
@@ -19804,13 +19235,18 @@ FVProxyField.prototype.replace = function(inner_field){
 }
 
 //Captures calls to val
-FVProxyField.prototype.val = function(set_val){
+FVProxyField.prototype.val = function(set_val, options){
     var field = this;
+    options = options || {}
+    
     if(field.inner_field){
         return field.inner_field.val.apply(field.inner_field, arguments);
     } else {
         if (arguments.length!==0) {
             field.last_val = set_val;
+            if (!options.ignore_change) {
+                field.did_change(options);
+            }
         }
     }
 }

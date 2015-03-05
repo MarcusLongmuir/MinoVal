@@ -13,9 +13,8 @@
     "minodb": "*",
     "minosdk": "MarcusLongmuir/MinoSDK",
     "extend": "MarcusLongmuir/extend",
-    "fieldval" : "0.1.5",
-    "fieldval-basicval" : "0.1.4",
-    "fieldval-rules" : "0.3.0",
+    "fieldval" : "FieldVal/fieldval-js#develop",
+    "fieldval-rules" : "FieldVal/fieldval-rules-js#develop",
     "body-parser": "*",
     "mustache-express": "*"
   },
