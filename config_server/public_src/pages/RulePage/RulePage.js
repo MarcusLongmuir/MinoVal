@@ -19,7 +19,7 @@ RulePage.prototype.create_type_field = function(rule) {
         rule = {}
     }
 
-    page.type_field = new MinovalTypeField(rule.mino_type, page.element, page.types);
+    page.type_field = new TypeField(rule.mino_type, page.element);
 
     page.element.append(
         page.type_field.element,
