@@ -6,7 +6,7 @@ var fieldval_rules = require('fieldval-rules');
 var MinoSDK = require('minosdk');
 var FVRule = require('minodb').FVRule;
 var FVRuleField = require('minodb').FVRule.FVRuleField;
-var BasicVal = require('fieldval-basicval');
+var BasicVal = FieldVal.BasicVal;
 var errors = require('./errors');
 
 var ConfigServer = require('./config_server/ConfigServer');
