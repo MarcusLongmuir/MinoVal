@@ -35,24 +35,24 @@ Available config options:
 * ```user```- username that should be making all API calls
 * ```folder_name``` - name of the folder where MinoVal should store custom validation rules (```/<user>/<folder_name>```)
 
-##validate(rule_name, object, callback)
+###validate(rule_name, object, callback)
 Validates the ```object``` using custom validation rule by name.
 
-##get_rule(rule_name, callback)
+###get_rule(rule_name, callback)
 Returns a JSON object of the custom validation rule by name.
 
-##get_type_rule(name, callback)
+###get_type_rule(name, callback)
 Returns a FVRule of a type or type field by name (i.e. both ```mino_user``` and ```mino_user.username``` valid).
 
-##save_rule(rule, callback)
+###save_rule(rule, callback)
 Saves custom validation rule.
 
-##delete_rule(name, callback)
+###delete_rule(name, callback)
 Deletes custom validation rule by name.
 
-###Frontend
+##Frontend
 
-####Usage
+###Usage
 Import fieldval, fieldlval-ui and fieldval-rules.
 ```html
 <script type="text/javascript" src="/fieldval/fieldval.js"></script>
@@ -64,10 +64,10 @@ Then import minoval.js which is served by MinoVal plugin server: ```<MINO_PATH>/
 <script type="text/javascript" src="/mino/minoval/minoval.js"></script>
 ```
 
-####get_rule(name, callback)
+###get_rule(name, callback)
 Returns a FVRule object of custom validation rule by name.
 
-####get_type_rule(type_name, callback)
+###get_type_rule(type_name, callback)
 Returns a FVRule object of Mino type by name.
 
 [fieldval-rules](https://github.com/FieldVal/fieldval-rules-js) documentation covers FVRule usage.
