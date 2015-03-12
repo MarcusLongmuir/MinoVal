@@ -71,3 +71,6 @@ Returns a FVRule object of custom validation rule by name.
 Returns a FVRule object of Mino type by name.
 
 [fieldval-rules](https://github.com/FieldVal/fieldval-rules-js) documentation covers FVRule usage.
+
+#Examples
+[mino-calendar-example](https://github.com/bestan/mino-calendar-example)
