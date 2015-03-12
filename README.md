@@ -53,8 +53,9 @@ Deletes custom validation rule by name.
 ##Frontend
 
 ###Usage
-Import fieldval, fieldlval-ui and fieldval-rules.
+Import jquery, fieldval, fieldlval-ui and fieldval-rules.
 ```html
+<script type="text/javascript" src="/jqeury.js"></script>
 <script type="text/javascript" src="/fieldval/fieldval.js"></script>
 <script type="text/javascript" src="/fieldval-rules/fieldval-rules.js"></script>
 <script type="text/javascript" src="/fieldval-ui/fieldval-ui.js"></script>
