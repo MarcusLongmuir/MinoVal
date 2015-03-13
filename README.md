@@ -1,7 +1,7 @@
 MinoVal
 ==========
 
-MinoVal is a [MinoDB](https://github.com/MarcusLongmuir/MinoDB/) plugin enabling advanced usage of Mino types.
+MinoVal is a [MinoDB](https://github.com/MarcusLongmuir/MinoDB/) plugin enabling re-using Mino types for validation in the backend and frontend, form creation on the frontend and definition of other Mino types.
 
 ##Features
 * Create, store and use custom validation rules defined in MinoVal UI
