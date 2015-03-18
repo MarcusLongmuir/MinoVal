@@ -19,7 +19,8 @@ RulePage.prototype.create_type_field = function(rule) {
         rule = {}
     }
 
-    page.type_field = new TypeField(rule.mino_type, page.element);
+    page.type_field = new TypeField();
+    page.type_field.val(rule.mino_type);
 
     page.element.append(
         page.type_field.element,
@@ -28,12 +29,10 @@ RulePage.prototype.create_type_field = function(rule) {
     )
 
     page.submit.click(function() {
-        page.type_field.form.submit();
+        page.type_field.submit();
     })
 
-    page.type_field.form.on_submit(function(object) {
-        // var object = type_field.val();
-        console.log(object);
+    page.type_field.on_submit(function(object) {
         output.text('"object": '+JSON.stringify(object,null,4));
 
         rule.mino_type = object;
@@ -47,13 +46,13 @@ RulePage.prototype.create_type_field = function(rule) {
             dataType: "json",
             data: JSON.stringify(rule),
             success: function(response) {
-                page.type_field.form.clear_errors();
+                page.type_field.clear_errors();
                 SAFE.load_url(SAFE.path, true);
                 console.log(response);
             },
             error: function(err, response) {
                 console.log(err.responseJSON, response);
-                page.type_field.form.error(err.responseJSON)
+                page.type_field.error(err.responseJSON)
             }
         })
     })

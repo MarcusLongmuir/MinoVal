@@ -2,9 +2,6 @@ if((typeof require) === 'function'){
     extend = require('extend')
     FVRule = require('minodb').FVRule;
     FVRuleField = require('minodb').FVRule.FVRuleField;
-    // minoval = require('../minoval.js').global_client;
-    // minoval = new MinoVal({user:"testuser"});
-    logger = require('tracer').console();
     FieldVal = require("fieldval");
     BasicVal = FieldVal.BasicVal;
 }
@@ -20,9 +17,6 @@ MinoRuleField.prototype.create_ui = function(form){
 	var field = this;
 
 	field.ui_field = new FVProxyField(field.display_name || field.name, {form:form});
-	field.ui_field.on_change(function(){
-	    console.log("UI FIELD ON CHANGE",arguments);
-	})
 
 	minoval.get_type_rule(field.mino_field, function(err, vr) {
 		var inner_field = vr.field.create_ui(parent);
@@ -52,15 +46,12 @@ MinoRuleField.prototype.init = function() {
 	return field.validator.end();
 }
 
-MinoRuleField.add_editor_params = function(editor) {
+MinoRuleField.add_editor_params = function(editor, value) {
 	var field = this;
-	console.log("adding minoval field");
 	minoval.get_types(function(err, types) {
-        console.log('feteched types');
         editor.add_field("mino_field", new MinovalField("Mino field", {
 			types: types
 		}));
-		var value = editor.val();
 		editor.fields.mino_field.val(value.mino_field);
     });
 }

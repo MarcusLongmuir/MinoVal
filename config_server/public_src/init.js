@@ -3,8 +3,9 @@
 @import("../../bower_components/fieldval/fieldval.js");
 var BasicVal = FieldVal.BasicVal;
 
-@import("../../bower_components/fieldval-rules/fieldval-rules.js");
 @import("../../bower_components/fieldval-ui/fieldval-ui.js");
+@import("../../bower_components/fieldval-rules/fieldval-rules.js");
+
 @import("../../bower_components/fieldval-ui/themes/minimal.js");
 @import("../../node_modules/MinoDB/default_plugins/browser_server/public_src/pages/BrowserPage/Browser/Views/TypeView/TypeField/TypeField.js");
 
