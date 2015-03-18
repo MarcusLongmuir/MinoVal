@@ -53,6 +53,9 @@ MinoRuleField.add_editor_params = function(editor, value) {
 			types: types
 		}));
 		editor.fields.mino_field.val(value.mino_field);
+		if (editor.is_disabled) {
+			editor.fields.mino_field.disable();
+		}
     });
 }
 

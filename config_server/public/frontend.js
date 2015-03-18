@@ -19550,6 +19550,7 @@ FVRuleEditor.prototype.update_type_fields = function(value){
 			rule_field.add_editor_params(editor, value);
 		}
 	}
+
 }
 
 FVRuleEditor.prototype.val = function(set_val, options) {
