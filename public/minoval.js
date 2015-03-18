@@ -126,13 +126,16 @@ MinoRuleField.prototype.init = function() {
 	return field.validator.end();
 }
 
-MinoRuleField.create_editor_ui = function(value, form) {
+MinoRuleField.add_editor_params = function(editor) {
 	var field = this;
+	console.log("adding minoval field");
 	minoval.get_types(function(err, types) {
-        form.add_field("mino_field", new MinovalField("Mino field", {
+        console.log('feteched types');
+        editor.add_field("mino_field", new MinovalField("Mino field", {
 			types: types
 		}));
-		form.fields.mino_field.val(value.mino_field);
+		var value = editor.val();
+		editor.fields.mino_field.val(value.mino_field);
     });
 }
 
