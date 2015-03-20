@@ -20,25 +20,26 @@ describe("validate", function() {
 		globals.minoval.validate("number_rule", "s", function(err, validator) {
 			assert.equal(err, null);
 			var val_error = validator.end();
+			logger.log(JSON.stringify(val_error, null, 4));
 			assert.deepEqual(val_error, {
 			    "error": 4,
 			    "error_message": "Multiple errors.",
 			    "errors": [
 			        {
-			            "error_message": "Incorrect field type. Expected number.",
+			            "error_message": "Incorrect field type. Expected number, but received string.",
 			            "error": 2,
 			            "expected": "number",
 			            "received": "string"
 			        },
 			        {
-			            "unrecognized": {
+			            "invalid": {
 			                "0": {
 			                    "error_message": "Unrecognized field.",
 			                    "error": 3
 			                }
 			            },
 			            "error_message": "One or more errors.",
-			            "error": 0
+			            "error": 5
 			        }
 			    ]
 			});

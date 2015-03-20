@@ -18,7 +18,7 @@ module.exports = function(done) {
 			}, "testuser")
 
 			var MinoSDK = require('minosdk');
-			var sdk = new MinoSDK("Mino");
+			var sdk = new MinoSDK("MinoDB");
 			sdk.set_local_api(mino.api);
 
 			globals.sdk = sdk;

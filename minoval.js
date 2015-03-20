@@ -61,7 +61,7 @@ function MinoVal(options) {
             "function": "search",
             parameters: {
                 paths: [
-                    "/Mino/types/"  
+                    "/MinoDB/types/"  
                 ]
             }
         },function(err,types_res){
@@ -181,7 +181,7 @@ MinoVal.prototype.get_type = function(name, callback) {
 		"function": "get",
 		parameters: {
 			addresses: [
-				"/Mino/types/"+name	
+				"/MinoDB/types/"+name	
 			]
 		}
 	}, function(err, res) {

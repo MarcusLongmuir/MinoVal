@@ -1,3 +1,4 @@
+var logger = require('tracer').console();
 var assert = require('assert');
 var globals = require('../globals');
 
