@@ -91,7 +91,7 @@ function ConfigServer(minoval){
             "function": "search",
             parameters: {
                 paths: [
-                    "/Mino/types/"  
+                    "/MinoDB/types/"  
                 ]
             }
         },function(err,types_res){
