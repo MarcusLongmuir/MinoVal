@@ -20,7 +20,7 @@ RulePage.prototype.create_type_field = function(rule) {
     }
 
     page.type_field = new TypeField();
-    page.type_field.val(rule.mino_type);
+    page.type_field.val(rule.minodb_type);
 
     page.element.append(
         page.type_field.element,
@@ -35,7 +35,7 @@ RulePage.prototype.create_type_field = function(rule) {
     page.type_field.on_submit(function(object) {
         output.text('"object": '+JSON.stringify(object,null,4));
 
-        rule.mino_type = object;
+        rule.minodb_type = object;
 
         var url = minoval_path + 'save_rule';
 

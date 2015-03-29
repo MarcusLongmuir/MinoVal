@@ -44,7 +44,7 @@ function MinoVal(options) {
             if (err) {
             	res.json(err);
             } else {
-            	res.json(rule.mino_type);	
+            	res.json(rule.minodb_type);	
             }
         });
     });
@@ -66,7 +66,7 @@ function MinoVal(options) {
             }
         },function(err,types_res){
             for (var i=0; i<types_res.objects.length; i++) {
-                var type = types_res.objects[i].mino_type
+                var type = types_res.objects[i].minodb_type
                 types.fields.push(type);
             }
             logger.log('received types', JSON.stringify(types, null, 4))
@@ -157,7 +157,7 @@ MinoVal.prototype.validate = function(name, params, callback) {
 			callback(err);
 			return;
 		}
-		var rule = rule.mino_type;
+		var rule = rule.minodb_type;
      	var vr = new FVRule();
      	var error = vr.init(rule);
     	
@@ -256,7 +256,7 @@ MinoVal.prototype.get_rule_object = function(name, callback) {
 	minoval.get_type(parts[0], function(err, type) {
 		logger.log(type);
 
-		var rule = type.mino_type;
+		var rule = type.minodb_type;
 		for (var i=1; i<parts.length; i++) {
 			logger.log(i, rule.fields, parts[i]);
 
@@ -284,14 +284,14 @@ MinoVal.prototype.get_rule_object = function(name, callback) {
 MinoVal.prototype.save_rule = function(object, callback) {
 	var minoval = this;
 
-	var err = MinoVal.validate_rule_data(object.mino_type);
+	var err = MinoVal.validate_rule_data(object.minodb_type);
 	if (err) {
 		callback(err)
 		return;
 	}
 
 	if (object.name == undefined) {
-		object.name = object.mino_type.name;
+		object.name = object.minodb_type.name;
 	}
 	if (object.path == undefined) {
 		object.path = minoval.path;
@@ -312,7 +312,7 @@ MinoVal.prototype.save_rule = function(object, callback) {
 			return;
 		}
 
-		object.name = object.mino_type.name;
+		object.name = object.minodb_type.name;
 
 		logger.log(object);
 

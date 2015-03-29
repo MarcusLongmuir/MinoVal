@@ -8,7 +8,7 @@ describe("create rule", function() {
 
 		globals.minoval.save_rule({
 			name: "number_rule",
-			mino_type: {
+			minodb_type: {
 				name: "number_rule",
 				type: "number"
 			}

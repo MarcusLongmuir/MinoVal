@@ -96,7 +96,7 @@ function ConfigServer(minoval){
             }
         },function(err,types_res){
             for (var i=0; i<types_res.objects.length; i++) {
-                var type = types_res.objects[i].mino_type
+                var type = types_res.objects[i].minodb_type
                 types.fields.push(type);
             }
             logger.log('received types', JSON.stringify(types, null, 4))
