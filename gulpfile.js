@@ -11,10 +11,29 @@ var less = require('gulp-less');
 var concat = require('gulp-concat');
 var gulpImports = require('gulp-imports');
 
+var mocha = require('gulp-mocha');
+var istanbul = require('gulp-istanbul');
+
 var onError = function (err) {  
     gutil.beep();
     console.log(err);
 };
+
+gulp.task('test', function(cb){
+    gulp.src( [ './minoval.js', 'config_server/ConfigServer.js' ] )
+    .pipe(istanbul())
+    .pipe(istanbul.hookRequire())
+    .on( 'finish', function () {
+        gulp.src( [ 'test/test.js' ] )
+        .pipe( mocha( {
+            // reporter: 'spec'
+        }))
+        .pipe(istanbul.writeReports())
+        .on('end', cb)
+        .on('error', gutil.log)
+    })
+    .on('error', gutil.log)
+});
 
 gulp.task('less', function(){
 
