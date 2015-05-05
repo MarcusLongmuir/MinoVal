@@ -22,7 +22,7 @@ MinoRuleField.prototype.create_ui = function(form){
 
 	field.ui_field = new FVProxyField(field.display_name || field.name, {form:form});
 
-	minoval.get_type_rule(field.mino_field, function(err, vr) {
+	minoval.get_type_rule(field.minodb_field, function(err, vr) {
 		var inner_field = vr.field.create_ui(parent);
 		console.log(inner_field);
         field.ui_field.replace(inner_field);
@@ -36,10 +36,10 @@ MinoRuleField.prototype.create_ui = function(form){
 MinoRuleField.prototype.init = function() {
 	var field = this;
 
-	field.mino_field = field.validator.get("mino_field", BasicVal.string(true));
+	field.minodb_field = field.validator.get("minodb_field", BasicVal.string(true));
 
 	field.checks.push(function(value, emit, done) {
-		minoval.get_type_rule(field.mino_field, function(err, vr) {
+		minoval.get_type_rule(field.minodb_field, function(err, vr) {
 			vr.validate(value, function(error) {
 				done(error);
 			});
@@ -53,12 +53,12 @@ MinoRuleField.prototype.init = function() {
 MinoRuleField.add_editor_params = function(editor, value) {
 	var field = this;
 	minoval.get_types(function(err, types) {
-        editor.add_field("mino_field", new MinovalField("Mino field", {
+        editor.add_field("minodb_field", new MinovalField("Mino field", {
 			types: types
 		}));
-		editor.fields.mino_field.val(value.mino_field);
+		editor.fields.minodb_field.val(value.minodb_field);
 		if (editor.is_disabled) {
-			editor.fields.mino_field.disable();
+			editor.fields.minodb_field.disable();
 		}
     });
 };
@@ -71,7 +71,7 @@ if (typeof module != 'undefined') {
 }
 
 FVRuleField.add_field_type({
-    name: 'mino_field',
+    name: 'minodb_field',
     display_name: 'Mino field',
     class: MinoRuleField
 });

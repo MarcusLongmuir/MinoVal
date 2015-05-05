@@ -114,8 +114,8 @@ MinoVal.prototype.init = function(minodb, callback){
     require('./common/MinoRuleField.js').init(minoval);
 
     minodb.add_field_type({
-    	name: "mino_field",
-    	display_name: "Mino field",
+    	name: "minodb_field",
+    	display_name: "MinoDB field",
     	class: require('./common/MinoRuleField.js').field
     });
 };
