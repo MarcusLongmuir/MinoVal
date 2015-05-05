@@ -17,35 +17,35 @@ function ConfigServer(minoval){
     us.express_server.set('views', path.join(__dirname, 'views'));
     us.express_server.set('view engine', 'mustache');
 
-    us.express_server.use(bodyParser());
+    us.express_server.use(bodyParser.json());
     us.express_server.use(express.static(path.join(__dirname, './public')));
     us.express_server.disable('etag');//Prevents 304s
 
     //Serve the same html file (if a static file wasn't served)
     us.express_server.get('/*', function(req, res) {
         var original_url = req.originalUrl;
-        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+        var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/';
 
         var params = {
             minoval_path: minoval_path,
-        }
+        };
 
         res.render('root.mustache', params);
     });
 
     us.express_server.post('/save_rule', function(req, res) {
-        logger.debug(req.body)
+        logger.debug(req.body);
 
         var object = req.body;
         minoval.save_rule(object, function(error, response) {
-            logger.debug(error, response)
+            logger.debug(error, response);
             if (error) {
                 res.json(error, 400);
                 return;
             }
 
             var original_url = req.originalUrl;
-            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/'
+            var minoval_path = original_url.substring(0, original_url.length - req._parsedUrl.path.length) + '/';
             res.json({
                 success:true
             });
@@ -54,11 +54,11 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/delete_rule', function(req, res) {
-        logger.debug(req.body)
+        logger.debug(req.body);
         minoval.delete_rule(req.body.name, function(error, response) {
             logger.debug(error, response);
             if (error) {
-                res.json(error)
+                res.json(error);
             } else {
                 res.json(response);
             }
@@ -96,20 +96,20 @@ function ConfigServer(minoval){
             }
         },function(err,types_res){
             for (var i=0; i<types_res.objects.length; i++) {
-                var type = types_res.objects[i].minodb_type
+                var type = types_res.objects[i].minodb_type;
                 types.fields.push(type);
             }
-            logger.debug('received types', JSON.stringify(types, null, 4))
+            logger.debug('received types', JSON.stringify(types, null, 4));
 
             var json_response = {
                 types: types
-            }
+            };
 
             if (req.body.name !== undefined) {
                 minoval.get_rule(req.body.name, function(err, rule) {
                     json_response.rule = rule;
                     res.json(json_response);
-                })   
+                });
             } else {
                 res.json(json_response);
             }

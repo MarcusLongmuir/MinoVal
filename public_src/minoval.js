@@ -13,7 +13,7 @@ MinoVal.prototype.init_path = function(name, callback) {
             break;
         }
     }
-}
+};
 
 MinoVal.create_fv_rule_from_object = function(object, callback) {
     var vr = new FVRule();
@@ -24,7 +24,7 @@ MinoVal.create_fv_rule_from_object = function(object, callback) {
     } else {
         callback(null, vr);
     }
-}
+};
 
 MinoVal.prototype.get_type_rule = function(name, callback) {
     var minoval = this;
@@ -40,7 +40,7 @@ MinoVal.prototype.get_type_rule = function(name, callback) {
 
         MinoVal.create_fv_rule_from_object(type_object, callback);
     });
-}
+};
 
 MinoVal.prototype.get_rule = function(name, callback) {
     var minoval = this;
@@ -60,7 +60,7 @@ MinoVal.prototype.get_rule = function(name, callback) {
         MinoVal.create_fv_rule_from_object(type_object, callback);
         
     });
-}
+};
 
 MinoVal.prototype.get_types = function(callback) {
     var minoval = this;
@@ -68,7 +68,7 @@ MinoVal.prototype.get_types = function(callback) {
     $.post(minoval.path + '/get_types', function(res) {
         callback(null, res.types);
     });   
-}
+};
 
 minoval = new MinoVal();
 

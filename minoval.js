@@ -22,7 +22,7 @@ function MinoVal(options) {
 
 	minoval.config_server = new ConfigServer(minoval);
 
-	minoval.main_server = express()
+	minoval.main_server = express();
     minoval.main_server.use(express.static(path.join(__dirname, './public')));
 
     minoval.main_server.post('/get_type_rule', function(req, res) {
@@ -66,20 +66,20 @@ function MinoVal(options) {
             }
         },function(err,types_res){
             for (var i=0; i<types_res.objects.length; i++) {
-                var type = types_res.objects[i].minodb_type
+                var type = types_res.objects[i].minodb_type;
                 types.fields.push(type);
             }
-            logger.debug('received types', JSON.stringify(types, null, 4))
+            logger.debug('received types', JSON.stringify(types, null, 4));
 
             var json_response = {
                 types: types
-            }
+            };
 
             if (req.body.name !== undefined) {
                 minoval.get_rule(req.body.name, function(err, rule) {
                     json_response.rule = rule;
                     res.json(json_response);
-                })   
+                })   ;
             } else {
                 res.json(json_response);
             }
@@ -93,7 +93,7 @@ MinoVal.global_client = "test";
 MinoVal.prototype.get_config_server = function(){
     var minoval = this;
     return minoval.config_server.express_server;
-}
+};
 
 MinoVal.prototype.info = function(){
     var minoval = this;
@@ -102,7 +102,7 @@ MinoVal.prototype.info = function(){
         name: "minoval",
         display_name: "MinoVal"
     };
-}
+};
 
 MinoVal.prototype.init = function(minodb, callback){
     var minoval = this;
@@ -117,8 +117,8 @@ MinoVal.prototype.init = function(minodb, callback){
     	name: "mino_field",
     	display_name: "Mino field",
     	class: require('./common/MinoRuleField.js').field
-    })
-}
+    });
+};
 
 MinoVal.prototype.get_scripts = function() {
 	var minoval = this;
@@ -127,7 +127,7 @@ MinoVal.prototype.get_scripts = function() {
 		path = path.substring(1, path.length);
 	}
 	return [path + "/minoval.js"];
-}
+};
 
 MinoVal.prototype.create_folders = function(callback) {
     var minoval = this;
@@ -147,17 +147,18 @@ MinoVal.prototype.create_folders = function(callback) {
         if (callback !== undefined) {
             callback();
         }   
-    })
-}
+    });
+};
 
 MinoVal.prototype.validate = function(name, params, callback) {
 	var minoval = this;
-	minoval.get_rule(name, function(err, rule) {
+	minoval.get_rule(name, function(err, res) {
 		if (err) {
 			callback(err);
 			return;
 		}
-		var rule = rule.minodb_type;
+		
+		var rule = res.minodb_type;
      	var vr = new FVRule();
      	var error = vr.init(rule);
     	
@@ -173,7 +174,7 @@ MinoVal.prototype.validate = function(name, params, callback) {
 
 		
 	});
-}
+};
 
 MinoVal.prototype.get_type = function(name, callback) {
 	var minoval = this;
@@ -187,12 +188,12 @@ MinoVal.prototype.get_type = function(name, callback) {
 	}, function(err, res) {
 		logger.debug(err, res);
 		if (err) {
-			callback(err)
+			callback(err);
 		} else {
 			callback(null, res.objects[0]);
 		}
 	});
-}
+};
 
 MinoVal.prototype.get_rule = function(name, callback) {
 	var minoval = this;
@@ -208,17 +209,17 @@ MinoVal.prototype.get_rule = function(name, callback) {
 			callback(err);
 			return;
 		}
-		logger.debug(res.objects[0])
+		logger.debug(res.objects[0]);
 
-		if (res.objects[0] == undefined) {
-			callback(errors.RULE_NOT_FOUND)
+		if (!res.objects[0]) {
+			callback(errors.RULE_NOT_FOUND);
 			return;
 		}
 		var rule = res.objects[0];
 
 		callback(err, rule);
 	});
-}
+};
 
 MinoVal.prototype.get_type_rule = function(name, callback) {
 	var minoval = this;
@@ -232,22 +233,22 @@ MinoVal.prototype.get_type_rule = function(name, callback) {
 		var vr = new FVRule();
 		var init_error = vr.init(rule);
 		if (init_error) {
-			callback(init_error)
+			callback(init_error);
 			return;
 		}
 
 		callback(null, vr);
 
 	});
-}
+};
 
 MinoVal.prototype.get_rule_object = function(name, callback) {
 	var minoval = this;
 
 	var parts = name.split(".");
-	if (parts.length == 0  || !parts[0]) {
+	if (parts.length === 0  || !parts[0]) {
 		callback(errors.RULE_NOT_FOUND);
-	} else if (parts[parts.length-1] == "") {
+	} else if (parts[parts.length-1] === "") {
 		parts = parts.slice(0, parts.length-1);
 	}
 
@@ -278,22 +279,22 @@ MinoVal.prototype.get_rule_object = function(name, callback) {
 		}
 		logger.debug(rule);
 		callback(null, rule);
-	})	
-}
+	});	
+};
 
 MinoVal.prototype.save_rule = function(object, callback) {
 	var minoval = this;
 
 	var err = MinoVal.validate_rule_data(object.minodb_type);
 	if (err) {
-		callback(err)
+		callback(err);
 		return;
 	}
 
-	if (object.name == undefined) {
+	if (object.name === undefined) {
 		object.name = object.minodb_type.name;
 	}
-	if (object.path == undefined) {
+	if (object.path === undefined) {
 		object.path = minoval.path;
 	}
 	logger.debug(object);
@@ -302,13 +303,13 @@ MinoVal.prototype.save_rule = function(object, callback) {
 		logger.debug(JSON.stringify(err, null, 4), res);
 
 		var db_object = res.objects[0];
-		if (db_object != null && object["_id"] !== db_object["_id"]) {
+		if (db_object !== null && object._id !== db_object._id) {
 			logger.debug(errors);
 			callback(
 				new FieldVal(null)
 				.invalid("name", errors.RULE_ALREADY_EXISTS)
 				.end()
-			)
+			);
 			return;
 		}
 
@@ -324,10 +325,9 @@ MinoVal.prototype.save_rule = function(object, callback) {
 			}
 
 			callback(null, res);
-		})
+		});
 	});
-
-}
+};
 
 MinoVal.prototype.delete_rule = function(name, callback) {
 	var minoval = this;
@@ -341,7 +341,7 @@ MinoVal.prototype.delete_rule = function(name, callback) {
 	},function(err,res){
 		callback(err, res);
 	});
-}
+};
 
 MinoVal.validate_rule_data = function(data) {
 	var rule = new FVRule();
@@ -358,6 +358,6 @@ MinoVal.validate_rule_data = function(data) {
 	validator.get("name", BasicVal.string(true), BasicVal.start_with_letter(), BasicVal.no_whitespace());
 
 	return validator.end();
-}
+};
 
 module.exports = MinoVal;

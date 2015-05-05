@@ -18,11 +18,11 @@ var mino = new MinoDB({
 var server = express();
 server.set('port', process.env.PORT || 5002);
 server.set('views', path.join(__dirname, 'views'));
-server.set('view engine', 'jade')
+server.set('view engine', 'jade');
 server.use(errorHandler());
-server.use(bodyParser());
+server.use(bodyParser.json());
 
-server.use('/mino/', mino.server())
+server.use('/mino/', mino.server());
 
 server.engine('mustache', mustacheExpress());
 server.set('views', path.join(__dirname, 'views'));
@@ -33,7 +33,7 @@ server.use(express.static(path.join(__dirname, './bower_components')));
 
 server.get('/*', function(req, res) {
     res.send("Minoval 404");
-})
+});
 
 mino.create_user({
 	"username": "my_app",

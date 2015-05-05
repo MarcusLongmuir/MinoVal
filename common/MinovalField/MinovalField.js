@@ -1,4 +1,4 @@
-extend(MinovalField, FVChoiceField);
+fieldval_ui_extend(MinovalField, FVChoiceField);
 
 function MinovalField(name, options) {
 	var field = this;

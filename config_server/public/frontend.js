@@ -14784,16 +14784,22 @@ var FieldVal = (function(){
             },
             value_in_list: function() {
                 return {
-                    error: 104,
+                    error: 118,
                     error_message: "Value not allowed"
                 };
             },
             should_not_contain: function(characters) {
                 var disallowed = characters.join(",");
                 return {
-                    error: 105,
+                    error: 119,
                     error_message: "Cannot contain "+disallowed,
                     cannot_contain: characters
+                };
+            },
+            invalid_domain: function() {
+                return {
+                    error: 120,
+                    error_message: "Invalid domain format."
                 };
             }
         },
@@ -15358,11 +15364,31 @@ var FieldVal = (function(){
                 check: check
             };
         },
+        domain: function(required, options){
+            options = BasicVal.merge_required_and_options(required, options);
+            var check = function(value) {
+                var string_error = BasicVal.string(options).check(value);
+                if(string_error!==undefined) return string_error;
+                
+                var re = BasicVal.domain_regex;
+                if(!re.test(value)){
+                    return FieldVal.create_error(BasicVal.errors.invalid_domain, options);
+                } 
+            };
+            if(options){
+                options.check = check;
+                return options;
+            }
+            return {
+                check: check
+            };
+        },
         required: FieldVal.required
     };
 
     BasicVal.email_regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     BasicVal.url_regex = /^(https?):\/\/(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(:[1-9][0-9]+)?(\/)?([\/?].+)?$/;
+    BasicVal.domain_regex = /^(https?):\/\/(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(:[1-9][0-9]+)?(\/)?$/;
 
     return BasicVal;
 }).call();
@@ -15412,11 +15438,20 @@ function FVField(name, options) {
         })
         .addClass("fv_field fv_form")
         .data("field",field)
-        .on("submit",function(event){
+        
+        var submit_function = function(event){
             event.preventDefault();
             field.submit();
             return false;
-        });
+        };
+
+        var field_dom_element = field.element[0];
+        if (field_dom_element.addEventListener) {// For all major browsers, except IE 8 and earlier
+            field_dom_element.addEventListener("submit", submit_function);
+        } else if (field_dom_element.attachEvent) {// For IE 8 and earlier versions
+            field_dom_element.attachEvent("submit", submit_function);
+        }
+
         field.on_submit_callbacks = [];
     } else {
         field.element = $("<div />").addClass("fv_field").data("field",field);
@@ -15802,7 +15837,7 @@ FVTextField.prototype.blur = function() {
     return field;
 }
 
-FVTextField.numeric_regex = /^\d+(\.\d+)?$/;
+FVTextField.numeric_regex = /^[-+]?\d*\.?\d+$/;
 
 FVTextField.prototype.val = function(set_val, options) {
     var field = this;
@@ -17955,7 +17990,7 @@ if($.fn.tap || $.tap){
 	FVForm.button_event = 'tap';
 }
 //Used to subclass Javascript classes
-function fieldval_rules_extend(sub, sup) {
+function fv_rules_extend(sub, sup) {
 	function emptyclass() {}
 	emptyclass.prototype = sup.prototype;
 	sub.prototype = new emptyclass();
@@ -17965,7 +18000,7 @@ function fieldval_rules_extend(sub, sup) {
 }
 
 if (typeof module != "undefined") {
-    module.exports = fieldval_rules_extend;
+    module.exports = fv_rules_extend;
 }
 
 var FVRuleField = (function(){
@@ -18180,17 +18215,17 @@ var FVTextRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVTextRuleField, FVRuleField);
+    fv_rules_extend(FVTextRuleField, FVRuleField);
 
     function FVTextRuleField(json, validator) {
         var field = this;
@@ -18281,17 +18316,17 @@ var FVNumberRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVNumberRuleField, FVRuleField);
+    fv_rules_extend(FVNumberRuleField, FVRuleField);
 
     function FVNumberRuleField(json, validator) {
         var field = this;
@@ -18377,17 +18412,17 @@ var FVObjectRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVObjectRuleField, FVRuleField);
+    fv_rules_extend(FVObjectRuleField, FVRuleField);
 
     function FVObjectRuleField(json, validator) {
         var field = this;
@@ -18566,17 +18601,17 @@ var FVKeyValueRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVKeyValueRuleField, FVRuleField);
+    fv_rules_extend(FVKeyValueRuleField, FVRuleField);
 
     function FVKeyValueRuleField(json, validator) {
         var field = this;
@@ -18687,17 +18722,17 @@ var FVArrayRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVArrayRuleField, FVRuleField);
+    fv_rules_extend(FVArrayRuleField, FVRuleField);
 
     function FVArrayRuleField(json, validator) {
         var field = this;
@@ -18947,17 +18982,17 @@ var FVChoiceRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVChoiceRuleField, FVRuleField);
+    fv_rules_extend(FVChoiceRuleField, FVRuleField);
 
     function FVChoiceRuleField(json, validator) {
         var field = this;
@@ -18974,6 +19009,8 @@ var FVChoiceRuleField = (function(){
             name: field.name,
             display_name: field.display_name,
             choices: field.choices,
+            allow_empty: field.allow_empty,
+            empty_text: field.empty_text,
             use_form: use_form
         });
         field.element = field.ui_field.element;
@@ -18983,8 +19020,10 @@ var FVChoiceRuleField = (function(){
     FVChoiceRuleField.prototype.init = function() {
         var field = this;
 
-        field.allow_empty = field.validator.get("allow_empty", BasicVal.boolean(false));
-        field.empty_message = field.validator.get("empty_message", BasicVal.string(false));
+        field.checks.push(BasicVal.required(field.required));
+        
+        field.allow_empty = !field.required;
+        field.empty_text = field.validator.get("empty_text", BasicVal.string(false));
         field.choices = field.validator.get("choices", BasicVal.array(true));
 
         if(field.choices!==undefined){
@@ -19147,17 +19186,17 @@ var FVBooleanRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVBooleanRuleField, FVRuleField);
+    fv_rules_extend(FVBooleanRuleField, FVRuleField);
 
     function FVBooleanRuleField(json, validator) {
         var field = this;
@@ -19228,17 +19267,17 @@ var FVEmailRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVEmailRuleField, FVRuleField);
+    fv_rules_extend(FVEmailRuleField, FVRuleField);
 
     function FVEmailRuleField(json, validator) {
         var field = this;
@@ -19295,17 +19334,17 @@ var FVDateRuleField = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('../fieldval_rules_extend');
+        _fv_rules_extend = require('../fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVDateRuleField, FVRuleField);
+    fv_rules_extend(FVDateRuleField, FVRuleField);
 
     function FVDateRuleField(json, validator) {
         var field = this;
@@ -19376,11 +19415,22 @@ var FVRule = (function(){
     }
     var FVRuleField = _FVRuleField;
 
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
+    } else if((typeof require) === "function"){
+        _fv_rules_extend = require("./fv_rules_extend");    
+    } else {
+        throw new Error("fv_rules_extend is missing");
+    }
+    var fv_rules_extend = _fv_rules_extend;
+
     function FVRule() {
         var vr = this;
     }
 
     FVRule.FVRuleField = FVRuleField;
+    FVRule.extend = fv_rules_extend;
 
     //Performs validation required for saving
     FVRule.prototype.init = function(json, options) {
@@ -19499,17 +19549,17 @@ var FVRuleEditor = (function(){
     }
     var FVRuleField = _FVRuleField;
 
-    var _fieldval_rules_extend;
-    if(this.fieldval_rules_extend !== undefined){
-        _fieldval_rules_extend = this.fieldval_rules_extend;
+    var _fv_rules_extend;
+    if(this.fv_rules_extend !== undefined){
+        _fv_rules_extend = this.fv_rules_extend;
     } else if((typeof require) === 'function'){
-        _fieldval_rules_extend = require('./fieldval_rules_extend');
+        _fv_rules_extend = require('./fv_rules_extend');
     } else {
-        throw new Error("fieldval_rules_extend() is missing");
+        throw new Error("fv_rules_extend() is missing");
     }
-    var fieldval_rules_extend = _fieldval_rules_extend;
+    var fv_rules_extend = _fv_rules_extend;
 
-    fieldval_rules_extend(FVRuleEditor, FVForm);
+    fv_rules_extend(FVRuleEditor, FVForm);
 	function FVRuleEditor(name, options){
 		var editor = this;
 

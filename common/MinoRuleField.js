@@ -1,12 +1,16 @@
 if((typeof require) === 'function'){
-    extend = require('extend')
+    extend = require('extend');
     FVRule = require('minodb').FVRule;
     FVRuleField = require('minodb').FVRule.FVRuleField;
     FieldVal = require("fieldval");
     BasicVal = FieldVal.BasicVal;
 }
 
-extend(MinoRuleField, FVRuleField);
+if (typeof extend !== 'undefined') {
+	extend(MinoRuleField, FVRuleField);
+} else {
+	fieldval_ui_extend(MinoRuleField, FVRuleField);
+}
 
 function MinoRuleField(json, validator) {
 	var field = this;
@@ -27,7 +31,7 @@ MinoRuleField.prototype.create_ui = function(form){
 
 	field.element = field.ui_field.element;
 	return field.ui_field;
-}
+};
 
 MinoRuleField.prototype.init = function() {
 	var field = this;
@@ -44,7 +48,7 @@ MinoRuleField.prototype.init = function() {
 	});
 
 	return field.validator.end();
-}
+};
 
 MinoRuleField.add_editor_params = function(editor, value) {
 	var field = this;
@@ -57,7 +61,7 @@ MinoRuleField.add_editor_params = function(editor, value) {
 			editor.fields.mino_field.disable();
 		}
     });
-}
+};
 
 if (typeof module != 'undefined') {
     module.exports.field = MinoRuleField;
