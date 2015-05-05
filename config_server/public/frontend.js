@@ -12432,6 +12432,7 @@ return jQuery;
 (function($) {
     $.fn.ajax_url = function(custom_trigger, on_trigger) {
         var element = this;
+        element.off('tap');
         element.on('tap',function(event) {
             var custom_trigger_return = null;
             if (custom_trigger != null) {
@@ -12864,10 +12865,6 @@ function Page() {
     page.element = $("<div />");
 }
 
-Page.prototype.new_url = function() {
-    return "NOT_SET";
-}
-
 Page.prototype.resize = function(resize_obj) {}
 
 Page.prototype.init = function() {}
@@ -12929,7 +12926,7 @@ SAFEClass.prototype.on_resize = function(resize_obj) {
     
 };
 
-SAFEClass.prototype.pre_load = function(class_name, parameters, url, wildcard_contents) {
+SAFEClass.prototype.pre_load = function(class_obj, details, old_page) {
     var sf = this;
 
     //Must return undefined (null shows 404)
@@ -13041,14 +13038,33 @@ SAFEClass.prototype.use_page_class = function(details){
         }
     }
 
-    if (class_obj === sf.previous_class) {
-        var new_url_response = sf.current_page.new_url(details);
-        if (new_url_response != "NOT_SET") {
-            if(details.anchor){
-                sf.scroll_to_anchor($("a[name*='"+details.anchor+"']"));
-            }
+    var redirect_response;
+    if(typeof class_obj.redirect === 'function'){
+        redirect_response = class_obj.redirect(details);
+    } else if(typeof class_obj.prototype.redirect === 'function'){
+        redirect_response = class_obj.prototype.redirect(details);
+    }
+    if (redirect_response !== undefined) {
+        if((typeof redirect_response) === 'function'){
+            //Given a class
+        } else if(redirect_response===null){
+            //Load the 404 page
+            details.class_name = null;
+            sf.use_page_class(details);
             return;
+        } else {
+            //Load as URL
+            sf.load_url(redirect_response, false);
         }
+        return;
+    }
+
+    if (class_obj === sf.previous_class && sf.current_page.new_url) {
+        var new_url_response = sf.current_page.new_url(details);
+        if(details.anchor){
+            sf.scroll_to_anchor($("a[name*='"+details.anchor+"']"));
+        }
+        return;
     }
 
     var old_page = null;
@@ -13193,7 +13209,7 @@ SAFEClass.prototype.init = function(desired_url) {
             }
             var state = History.getState();
             if (state != null) {
-                sf.load_url(decodeURI(state.url), false);
+                sf.load_url(state.url, false);
             }
         });
     }
@@ -13234,6 +13250,20 @@ SAFEClass.prototype.replace_current_url = function(new_url, call_url_changed) {
             false
         );
     }
+}
+
+SAFEClass.prototype.add_history_state = function(url){
+    var sf = this;
+
+    var full_url;
+    if(url.substring(0,Site.origin.length)===Site.origin){
+        full_url = url;
+    } else {
+        full_url = Site.origin + url;
+    }
+
+    sf.ignore_next_url = true;
+    History.pushState(null, "", full_url);
 }
 
 SAFEClass.prototype.add_url = function(url, class_name) {
@@ -13298,7 +13328,7 @@ SAFEClass.prototype.get_class_and_details_for_url = function(url_with_query) {
         query_params = sf.parse_query_string(url_split[1]);
     }
 
-    var url = decodeURIComponent(url_split[0]);
+    var url = url_split[0];
 
     if (url.length >= sf.origin.length) {
         if (url.substring(0, sf.origin.length) == sf.origin) {
@@ -13379,7 +13409,7 @@ SAFEClass.prototype.get_class_and_details_for_url = function(url_with_query) {
             var part = url_parts[k];
             if(map_part[0]===":"){
                 var param_name = map_part.substring(1);
-                this_url_params[param_name] = part;
+                this_url_params[param_name] = decodeURIComponent(part);
             } else if(map_part[0]==="*"){
                 is_valid = true;
                 had_wildcard = true;
@@ -13431,19 +13461,20 @@ SAFEClass.prototype.load_url = function(url_with_query, push_state) {
     }
 
     if (!sf.history_state_supported) {
-        var target = encodeURI(full_url);
+        var target = full_url;
         if (window.location != target && window.location != full_url) {
             window.location = target;
             return;
         }
     } else {
+        sf.ignore_next_url = true;
         if (push_state) {
-            sf.ignore_next_url = true;
             History.pushState(null, "", full_url);
             sf.previous_url = full_url;
         } else {
             History.replaceState(null, "", full_url);
         }
+        sf.ignore_next_url = false;
     }
 
     sf.current_url = full_url;
@@ -14784,22 +14815,16 @@ var FieldVal = (function(){
             },
             value_in_list: function() {
                 return {
-                    error: 118,
+                    error: 104,
                     error_message: "Value not allowed"
                 };
             },
             should_not_contain: function(characters) {
                 var disallowed = characters.join(",");
                 return {
-                    error: 119,
+                    error: 105,
                     error_message: "Cannot contain "+disallowed,
                     cannot_contain: characters
-                };
-            },
-            invalid_domain: function() {
-                return {
-                    error: 120,
-                    error_message: "Invalid domain format."
                 };
             }
         },
@@ -15364,31 +15389,11 @@ var FieldVal = (function(){
                 check: check
             };
         },
-        domain: function(required, options){
-            options = BasicVal.merge_required_and_options(required, options);
-            var check = function(value) {
-                var string_error = BasicVal.string(options).check(value);
-                if(string_error!==undefined) return string_error;
-                
-                var re = BasicVal.domain_regex;
-                if(!re.test(value)){
-                    return FieldVal.create_error(BasicVal.errors.invalid_domain, options);
-                } 
-            };
-            if(options){
-                options.check = check;
-                return options;
-            }
-            return {
-                check: check
-            };
-        },
         required: FieldVal.required
     };
 
     BasicVal.email_regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     BasicVal.url_regex = /^(https?):\/\/(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(:[1-9][0-9]+)?(\/)?([\/?].+)?$/;
-    BasicVal.domain_regex = /^(https?):\/\/(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])))(:[1-9][0-9]+)?(\/)?$/;
 
     return BasicVal;
 }).call();
@@ -15431,6 +15436,8 @@ function FVField(name, options) {
     field.is_disabled = false;
 
     field.on_change_callbacks = [];
+    field.on_focus_callbacks = [];
+    field.on_blur_callbacks = [];
 
     if(field.options.use_form){
         field.element = $("<form />",{
@@ -15464,9 +15471,8 @@ function FVField(name, options) {
     if(field.options.description){
         field.description_label = $("<div />").addClass("fv_field_description").text(field.options.description)
     }
-    field.input_holder = $("<div />").addClass("fv_input_holder")
+    field.input_holder = $("<div />").addClass("fv_input_holder");
     field.error_message = $("<div />").addClass("fv_error_message").hide()
-
     field.layout();
 }
 
@@ -15474,6 +15480,8 @@ FVField.prototype.clear_errors = function(){
     var field = this;
 
     field.error(null);
+
+    return field;
 }
 
 FVField.prototype.on_submit = function(callback){
@@ -15512,16 +15520,20 @@ FVField.prototype.in_array = function(parent, remove_callback){
         );
     }
 
-    field.element.append(
-        field.remove_button = $("<button />",{type:"button"})
-        .addClass("fv_field_remove_button")
-        .html("&#10006;").on(FVForm.button_event,function(event){
-            event.preventDefault();
-            field.array_remove_callback(field.key_name);
-            remove_callback();
-            field.remove();
-        })
-    )
+    if (!field.array_parent.hide_remove_button) {
+        field.element.addClass("with_remove_button").append(
+            field.remove_button = $("<button />",{type:"button"})
+            .addClass("fv_field_remove_button")
+            .html("&#10006;").on(FVForm.button_event,function(event){
+                event.preventDefault();
+                field.array_remove_callback(field.key_name);
+                remove_callback();
+                field.remove();
+            })
+        )
+    }
+
+    return field;
 }
 
 FVField.prototype.in_key_value = function(parent, remove_callback){
@@ -15546,11 +15558,14 @@ FVField.prototype.in_key_value = function(parent, remove_callback){
             field.key_value_remove_callback(field.key_name);
             field.remove();
         })
-    )
+    );
+
+    return field;
 }
 
 FVField.prototype.init = function(){
     var field = this;
+    return field;
 }
 
 FVField.prototype.remove = function(from_parent){
@@ -15561,6 +15576,8 @@ FVField.prototype.remove = function(from_parent){
         field.parent.remove_field(field);
         field.parent = null;
     }
+
+    return field;
 }
 
 FVField.prototype.change_name = function(name) {
@@ -15578,12 +15595,30 @@ FVField.prototype.layout = function(){
         field.input_holder,
         field.error_message
     )
+
+    return field;
 }
 
 FVField.prototype.on_change = function(callback){
     var field = this;
 
     field.on_change_callbacks.push(callback);
+
+    return field;
+}
+
+FVField.prototype.on_focus = function(callback){
+    var field = this;
+
+    field.on_focus_callbacks.push(callback);
+
+    return field;
+}
+
+FVField.prototype.on_blur = function(callback){
+    var field = this;
+
+    field.on_blur_callbacks.push(callback);
 
     return field;
 }
@@ -15616,8 +15651,45 @@ FVField.prototype.did_change = function(options){
     return field;
 }
 
+FVField.prototype.did_focus = function(){
+    var field = this;
+
+    for(var i = 0; i < field.on_focus_callbacks.length; i++){
+        var callback = field.on_focus_callbacks[i];
+
+        callback();
+    }
+
+    if(field.parent){
+        field.parent.did_focus();
+    }
+
+    return field;
+}
+
+FVField.prototype.did_blur = function(){
+    var field = this;
+
+    if(field.suppress_blur){
+        return field;
+    }
+
+    for(var i = 0; i < field.on_blur_callbacks.length; i++){
+        var callback = field.on_blur_callbacks[i];
+
+        callback();
+    }
+
+    if(field.parent){
+        field.parent.did_blur();
+    }
+
+    return field;
+}
+
 FVField.prototype.icon = function(params) {
     var field = this;
+    return field;
 }
 
 FVField.prototype.val = function(set_val) {
@@ -15666,20 +15738,30 @@ FVField.prototype.enable = function() {
 
 FVField.prototype.blur = function() {
     var field = this;
+
+    if(field.name_input){
+        field.name_input.blur();
+    }
+
+    return field;
 }
 
 FVField.prototype.focus = function() {
     var field = this;
+
+    return field;
 }
 
 FVField.prototype.show_error = function(){
     var field = this;
     field.error_message.show();
+    return field;
 }
 
 FVField.prototype.hide_error = function(){
     var field = this;
     field.error_message.hide();
+    return field;
 }
 
 //Used in key_value fields
@@ -15735,6 +15817,7 @@ function FVTextField(name, options) {
         options = {};
     } else if(options_type === "object"){
         field.input_type = options.type || "text";
+        field.consume_tabs = options.consume_tabs || false;
     } else {
         options = {};
     }
@@ -15762,12 +15845,30 @@ function FVTextField(name, options) {
             for(var i = 0; i < field.enter_callbacks.length; i++){
                 field.enter_callbacks[i](e);
             }
+
+            if(field.input_type==="textarea" && (event.metaKey || event.ctrlKey)){
+                var form = field.element.closest("form");
+                if(form){
+                    form.data("field").submit();
+                }
+            }
+        }
+
+        if(field.input_type==="textarea" && field.consume_tabs && e.keyCode===9) {
+            e.preventDefault();
+            document.execCommand("insertText", false, "\t");
         }
     })
     .on("keyup paste cut",function(){
         setTimeout(function(){
             field.check_changed();
         },0);
+    })
+    .on("focus",function(){
+        field.did_focus();
+    })
+    .on("blur",function(){
+        field.did_blur();
     })
     .appendTo(field.input_holder);
 }
@@ -15827,14 +15928,18 @@ FVTextField.prototype.enable = function() {
 
 FVTextField.prototype.focus = function() {
     var field = this;
+    
     field.input.focus();
-    return field;
+
+    return FVField.prototype.focus.call(this);
 }
 
 FVTextField.prototype.blur = function() {
     var field = this;
+    
     field.input.blur();
-    return field;
+
+    return FVField.prototype.blur.call(this);
 }
 
 FVTextField.numeric_regex = /^[-+]?\d*\.?\d+$/;
@@ -15929,8 +16034,6 @@ FVDisplayField.prototype.val = function(set_val, options) {
         return field;
     }
 }
-fieldval_ui_extend(FVChoiceField, FVField);
-
 function FVChoiceOption(choice, parent){
     var choice_option = this;
 
@@ -16014,6 +16117,8 @@ FVChoiceOption.prototype.get_display = function(){
     return $("<div />").text(choice_option.choice_text);
 }
 
+fieldval_ui_extend(FVChoiceField, FVField);
+
 function FVChoiceField(name, options) {
     var field = this;
 
@@ -16034,7 +16139,9 @@ function FVChoiceField(name, options) {
     .append(
         field.filter_input = $("<input type='text' />")
         .on('focus',function(e){
-            field.focus();
+            setTimeout(function(){
+                field.input_focus();
+            },1);
         })
         .attr("placeholder", name)
         .addClass("filter_input")
@@ -16164,19 +16271,22 @@ FVChoiceField.prototype.show_list = function(){
 
     if(!field.is_disabled){
 
+        if(field.list_open){
+            return field;
+        }
+
         field.input_holder.css("min-height", field.current_display.outerHeight()+"px");
 
         field.filter_input.removeClass("fv_filter_hidden");
         field.current_display.hide();
-        if(!FVForm.is_mobile){
-            if(!field.filter_input.is(":focus")){
-                field.filter_input.focus();
-            }
-        }
         field.choice_list.show();
         field.current_highlight = field.selected_value;
         field.filter(field.filter_input.val(), true);
+
+        field.list_open = true;
     }
+
+    return field;
 }
 
 FVChoiceField.prototype.hide_list = function(){
@@ -16192,6 +16302,10 @@ FVChoiceField.prototype.hide_list = function(){
     field.filter_input.addClass("fv_filter_hidden")
     field.current_display.show();
     field.choice_list.hide();
+
+    field.list_open = false;
+
+    return field;
 }
 
 FVChoiceField.prototype.filter = function(text, initial){
@@ -16255,8 +16369,26 @@ FVChoiceField.prototype.select_option = function(choice_option, options){
         )
     }
     field.hide_list();
-    
-    field.filter_input.blur().val("");
+
+    if(!options.val_event){
+        var next;
+        if(field.filter_input.is(":focus")){
+            var tabables = $("input[tabindex != '-1']:visible,textarea[tabindex != '-1']:visible,button[tabindex != '-1']:visible");
+            if(tabables){
+                var index = tabables.index(field.filter_input);
+                if(index!==-1){
+                    next = tabables[index + 1];
+                }
+            }
+        }
+        if(next){
+            next.focus();
+        } else {
+            field.blur();
+        }
+    }
+
+    field.filter_input.val("");
     
     if(!options.ignore_change){
         field.did_change(options);
@@ -16354,15 +16486,22 @@ FVChoiceField.prototype.select_highlighted = function(){
     }
 }
 
-FVChoiceField.prototype.focus = function() {
+FVChoiceField.prototype.input_focus = function(){
+    var field = this;
+
+    field.filter_input.val("");
+
+    field.show_list();
+
+    field.did_focus();
+}
+
+FVChoiceField.prototype.focus = function(from_input) {
     var field = this;
     
-    field.filter_input.val("");
-    setTimeout(function(){
-        field.show_list();
-    },1);
+    field.filter_input.focus();
 
-    return field;
+    return FVField.prototype.focus.call(this);
 }
 
 FVChoiceField.prototype.blur = function() {
@@ -16370,7 +16509,9 @@ FVChoiceField.prototype.blur = function() {
     
     field.hide_list();
 
-    return field;
+    field.did_blur();
+
+    return FVField.prototype.blur.call(this);
 }
 
 FVChoiceField.prototype.val = function(set_val, options) {
@@ -16386,6 +16527,8 @@ FVChoiceField.prototype.val = function(set_val, options) {
             for(var i = 0; i < field.option_array.length; i++){
                 var choice_option = field.option_array[i];
                 if(set_val === choice_option.get_value()){
+                    options = options || {};
+                    options.val_event = true;
                     field.select_option(choice_option, options);
                     break;
                 }
@@ -16456,11 +16599,15 @@ FVDateField.prototype.add_element_from_component = function(component, component
         .on("keyup",function(){
             field.did_change()
         })
-
-        input.blur(function(){
+        .on("focus",function(e){
+            field.did_focus();
+        })
+        .on("blur",function(e){
             var input_val = input.val();
             var padded = DateVal.pad_to_valid(input_val, component_value);
             input.val(padded);
+
+            field.did_blur();
         })
 
         field.inputs.push(input);
@@ -16510,21 +16657,27 @@ FVDateField.prototype.focus = function() {
     
     var input = field.inputs[0];
     if(input){
-        input.blur();
+        input.focus();
     }
 
-    return field;
+    return FVField.prototype.focus.call(this);
 }
 
 FVDateField.prototype.blur = function() {
     var field = this;
+
+    field.suppress_blur = true;
     for(var i = 0; i < field.inputs.length; i++){
         var input = field.inputs[i];
         if(input){
             input.blur();
         }
     }
-    return field;
+    field.suppress_blur = false;
+
+    field.did_blur();
+
+    return FVField.prototype.blur.call(this);
 }
 
 FVDateField.prototype.val = function(set_val, options) {
@@ -16605,6 +16758,12 @@ function FVBooleanField(name, options) {
     .on("change",function(){
         field.did_change()
     })
+    .on("focus",function(){
+        field.did_focus();
+    })
+    .on("blur",function(){
+        field.did_blur();
+    })
     .appendTo(field.input_holder);
 }
 
@@ -16623,13 +16782,13 @@ FVBooleanField.prototype.enable = function() {
 FVBooleanField.prototype.focus = function() {
     var field = this;
     field.input.focus();
-    return field;
+    return FVField.prototype.focus.call(this);
 }
 
 FVBooleanField.prototype.blur = function() {
     var field = this;
     field.input.blur();
-    return field;
+    return FVField.prototype.blur.call(this);
 }
 
 FVBooleanField.prototype.val = function(set_val, options) {
@@ -16761,20 +16920,35 @@ FVObjectField.prototype.enable = function() {
 
 FVObjectField.prototype.focus = function() {
     var field = this;
-    return field;
+    
+    for(var i in field.fields){
+        if(field.fields.hasOwnProperty(i)){
+            var inner_field = field.fields[i];
+            if(inner_field){
+                inner_field.focus();
+                return field;
+            }
+        }    
+    }
+
+    return FVField.prototype.focus.call(this);
 }
 
 FVObjectField.prototype.blur = function() {
     var field = this;
 
+    field.suppress_blur = true;
     for(var i in field.fields){
         if(field.fields.hasOwnProperty(i)){
             var inner_field = field.fields[i];
             inner_field.blur();
         }
     }
+    field.suppress_blur = false;
 
-    return field;
+    field.did_blur();
+
+    return FVField.prototype.blur.call(this);
 }
 
 FVObjectField.prototype.error = function(error){
@@ -17215,6 +17389,10 @@ function FVArrayField(name, options) {
 
     FVArrayField.superConstructor.call(this, name, options);
 
+    field.hide_add_button = field.options.hide_add_button || false;
+    field.hide_remove_button = field.options.hide_remove_button || false;
+    field.sortable = field.options.sortable || false;
+
     field.fields = [];
 
     field.add_button_text = field.options.add_button_text!==undefined ? field.options.add_button_text : "+";
@@ -17222,11 +17400,14 @@ function FVArrayField(name, options) {
 
     field.element.addClass("fv_array_field");
     field.input_holder.append(
-        field.fields_element = $("<div />").addClass("fv_array_fields"),
-        field.create_add_field_button()
+        field.fields_element = $("<div />").addClass("fv_array_fields")
     )
 
-    field.sortable = field.options.sortable===undefined || field.options.sortable!==false;
+    if (!field.hide_add_button) {
+        field.input_holder.append(
+            field.create_add_field_button()
+        )
+    }
     
     if(field.sortable){
         field.element.addClass("fv_array_field_sortable");
@@ -17310,6 +17491,17 @@ FVArrayField.prototype.add_field = function(inner_field){
     }
 }
 
+FVArrayField.prototype.remove = function(from_parent){
+    var field = this;
+
+    for(var i=0; i<field.fields.length; i++){
+        var inner_field = field.fields[i];
+        inner_field.remove();
+    }
+
+    FVField.prototype.remove.call(this, from_parent);
+}
+
 FVArrayField.prototype.remove_field = function(target){
     var field = this;
 
@@ -17318,13 +17510,11 @@ FVArrayField.prototype.remove_field = function(target){
         index = target;
         inner_field = field.fields[target];
     } else if(target instanceof FVField){
-        for(var i in field.fields){
-            if(field.fields.hasOwnProperty(i)){
-                if(field.fields[i]===target){
-                    index = i;
-                    inner_field = field.fields[i];
-                    break;
-                }
+        for(var i=0; i<field.fields.length; i++){
+            if(field.fields[i]===target){
+                index = i;
+                inner_field = field.fields[i];
+                break;
             }
         }
     } else {
@@ -17361,7 +17551,7 @@ FVArrayField.prototype.fields_error = function(error){
         }
 
     } else {
-        for(var i in field.fields){
+        for(var i=0; i<field.fields.length; i++){
             var inner_field = field.fields[i];
             inner_field.error(null);
         }
@@ -17404,6 +17594,35 @@ FVArrayField.prototype.enable = function(){
         add_field_button.show();
     }
     return FVField.prototype.enable.call(this);
+}
+
+FVArrayField.prototype.focus = function() {
+    var field = this;
+    
+    for(var i = 0; i < field.fields.length; i++){
+        var inner_field = field.fields[i];
+        if(inner_field){
+            inner_field.focus();
+            return field;
+        }    
+    }
+
+    return FVField.prototype.focus.call(this);
+}
+
+FVArrayField.prototype.blur = function() {
+    var field = this;
+
+    field.suppress_blur = true;
+    for(var i = 0; i < field.fields.length; i++){
+        var inner_field = field.fields[i];
+        inner_field.blur();
+    }
+    field.suppress_blur = false;
+
+    field.did_blur();
+
+    return FVField.prototype.blur.call(this);
 }
 
 FVArrayField.prototype.error = function(error) {
@@ -17485,8 +17704,18 @@ FVArrayField.prototype.val = function(set_val, options) {
                     inner_field = field.fields[i];
                 }
                 inner_field.val(set_val[i], options);
-
         	}
+            if(set_val.length<field.fields.length){
+                var to_remove = [];
+                for(var i = set_val.length; i < field.fields.length; i++){
+                    to_remove.push(field.fields[i]);
+                }
+
+                for(var i = 0; i < to_remove.length; i++){
+                    var inner_field = to_remove[i];
+                    inner_field.remove();
+                }
+            }
             
             if (!options.ignore_change) {
                 field.did_change(options);
@@ -17698,6 +17927,46 @@ FVKeyValueField.prototype.enable = function(){
         add_field_button.show();
     }
     return FVField.prototype.enable.call(this);
+}
+
+FVKeyValueField.prototype.focus = function() {
+    var field = this;
+    
+    for(var i = 0; i < field.fields.length; i++){
+        var inner_field = field.fields[i];
+        if(inner_field){
+            inner_field.focus();
+            return field;
+        }    
+    }
+
+    return FVField.prototype.focus.call(this);
+}
+
+FVKeyValueField.prototype.blur = function() {
+    var field = this;
+
+    field.suppress_blur = true;
+    for(var i = 0; i < field.fields.length; i++){
+        var inner_field = field.fields[i];
+        inner_field.blur();
+    }
+    field.suppress_blur = false;
+
+    field.did_blur();
+
+    return FVField.prototype.blur.call(this);
+}
+
+FVKeyValueField.prototype.remove = function(from_parent){
+    var field = this;
+
+    for(var i=0; i<field.fields.length; i++){
+        var inner_field = field.fields[i];
+        inner_field.remove();
+    }
+
+    FVField.prototype.remove.call(this, from_parent);
 }
 
 FVKeyValueField.prototype.error = function(error) {

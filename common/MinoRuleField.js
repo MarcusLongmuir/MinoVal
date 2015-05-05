@@ -17,10 +17,10 @@ function MinoRuleField(json, validator) {
 	MinoRuleField.superConstructor.call(this, json, validator);
 }
 
-MinoRuleField.prototype.create_ui = function(form){
+MinoRuleField.prototype.create_ui = function(use_form){
 	var field = this;
 
-	field.ui_field = new FVProxyField(field.display_name || field.name, {form:form});
+	field.ui_field = new FVProxyField(field.display_name || field.name, {use_form:use_form});
 
 	minoval.get_type_rule(field.minodb_field, function(err, vr) {
 		var inner_field = vr.field.create_ui(parent);
