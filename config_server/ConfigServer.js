@@ -1,4 +1,4 @@
-var logger = require('tracer').console();
+var logger = require('mino-logger');
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -34,11 +34,11 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/save_rule', function(req, res) {
-        logger.log(req.body)
+        logger.debug(req.body)
 
         var object = req.body;
         minoval.save_rule(object, function(error, response) {
-            logger.log(error, response)
+            logger.debug(error, response)
             if (error) {
                 res.json(error, 400);
                 return;
@@ -54,9 +54,9 @@ function ConfigServer(minoval){
     });
 
     us.express_server.post('/delete_rule', function(req, res) {
-        logger.log(req.body)
+        logger.debug(req.body)
         minoval.delete_rule(req.body.name, function(error, response) {
-            logger.log(error, response);
+            logger.debug(error, response);
             if (error) {
                 res.json(error)
             } else {
@@ -74,7 +74,7 @@ function ConfigServer(minoval){
                 ]
             }
         },function(err, rules){
-            logger.log(err, rules);
+            logger.debug(err, rules);
             res.json(rules);
         });
     });
@@ -99,7 +99,7 @@ function ConfigServer(minoval){
                 var type = types_res.objects[i].minodb_type
                 types.fields.push(type);
             }
-            logger.log('received types', JSON.stringify(types, null, 4))
+            logger.debug('received types', JSON.stringify(types, null, 4))
 
             var json_response = {
                 types: types

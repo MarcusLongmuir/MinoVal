@@ -1,4 +1,4 @@
-var logger = require('tracer').console();
+var logger = require('mino-logger');
 var express = require('express');
 var connect = require('connect');
 var http = require('http');
@@ -41,7 +41,7 @@ mino.create_user({
 	"password": "my_password"
 }, function(err, res){
 
-	logger.log("CREATED USER");
+	logger.debug("CREATED USER");
 
 	var MinoVal = require('./minoval');
 	var minoval = new MinoVal({
@@ -51,6 +51,6 @@ mino.create_user({
 	mino.add_plugin(minoval);
 
 	http.createServer(server).listen(server.get('port'), function() {
-	    console.log('Server started on port ' + server.get('port'));
+	    logger.info('Server started on port ' + server.get('port'));
 	});
 });

@@ -1,4 +1,4 @@
-var logger = require('tracer').console();
+var logger = require('mino-logger');
 var globals = require('./globals');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
@@ -30,14 +30,14 @@ module.exports = function(done) {
 	                email: "test@minocloud.com",
 	                password: "my_password"
 				}, function(user_err, user_res){
-	                logger.log(JSON.stringify(user_err, null, 4), user_res);
+	                logger.debug(JSON.stringify(user_err, null, 4), user_res);
 
 					mino.create_user({
 		                username: "otheruser",
 		                email: "test@minocloud.com",
 		                password: "my_password"
 					}, function(user_err, user_res){
-					    logger.log(JSON.stringify(user_err, null, 4), user_res);
+					    logger.debug(JSON.stringify(user_err, null, 4), user_res);
 						
 					    var minoval = new MinoVal({
 					    	user: "testuser"

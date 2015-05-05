@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-var logger = require('tracer').console();
 
 var nodemon = require('gulp-nodemon');
 var path = require('path');

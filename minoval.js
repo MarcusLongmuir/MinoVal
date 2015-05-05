@@ -1,5 +1,5 @@
 var FieldVal = require('fieldval');
-var logger = require('tracer').console();
+var logger = require('mino-logger');
 var express = require('express');
 var path = require('path');
 var fieldval_rules = require('fieldval-rules');
@@ -26,9 +26,9 @@ function MinoVal(options) {
     minoval.main_server.use(express.static(path.join(__dirname, './public')));
 
     minoval.main_server.post('/get_type_rule', function(req, res) {
-        logger.log(req.body.name);
+        logger.debug(req.body.name);
         minoval.get_rule_object(req.body.name, function(err, rule) {
-            logger.log(err, rule);
+            logger.debug(err, rule);
             if (err) {
             	res.json(err);
             } else {
@@ -38,9 +38,9 @@ function MinoVal(options) {
     });
 
     minoval.main_server.post('/get_rule', function(req, res) {
-        logger.log(req.body.name);
+        logger.debug(req.body.name);
         minoval.get_rule(req.body.name, function(err, rule) {
-        	logger.log(err, rule);
+        	logger.debug(err, rule);
             if (err) {
             	res.json(err);
             } else {
@@ -69,7 +69,7 @@ function MinoVal(options) {
                 var type = types_res.objects[i].minodb_type
                 types.fields.push(type);
             }
-            logger.log('received types', JSON.stringify(types, null, 4))
+            logger.debug('received types', JSON.stringify(types, null, 4))
 
             var json_response = {
                 types: types
@@ -143,7 +143,7 @@ MinoVal.prototype.create_folders = function(callback) {
             }]
         } 
     }, function(err, res) {
-        logger.log(JSON.stringify(err, null, 4), res); 
+        logger.debug(JSON.stringify(err, null, 4), res); 
         if (callback !== undefined) {
             callback();
         }   
@@ -185,7 +185,7 @@ MinoVal.prototype.get_type = function(name, callback) {
 			]
 		}
 	}, function(err, res) {
-		logger.log(err, res);
+		logger.debug(err, res);
 		if (err) {
 			callback(err)
 		} else {
@@ -208,7 +208,7 @@ MinoVal.prototype.get_rule = function(name, callback) {
 			callback(err);
 			return;
 		}
-		logger.log(res.objects[0])
+		logger.debug(res.objects[0])
 
 		if (res.objects[0] == undefined) {
 			callback(errors.RULE_NOT_FOUND)
@@ -251,14 +251,14 @@ MinoVal.prototype.get_rule_object = function(name, callback) {
 		parts = parts.slice(0, parts.length-1);
 	}
 
-	logger.log(parts);
+	logger.debug(parts);
 
 	minoval.get_type(parts[0], function(err, type) {
-		logger.log(type);
+		logger.debug(type);
 
 		var rule = type.minodb_type;
 		for (var i=1; i<parts.length; i++) {
-			logger.log(i, rule.fields, parts[i]);
+			logger.debug(i, rule.fields, parts[i]);
 
 			var found = false;
 			
@@ -276,7 +276,7 @@ MinoVal.prototype.get_rule_object = function(name, callback) {
 			}
 
 		}
-		logger.log(rule);
+		logger.debug(rule);
 		callback(null, rule);
 	})	
 }
@@ -296,14 +296,14 @@ MinoVal.prototype.save_rule = function(object, callback) {
 	if (object.path == undefined) {
 		object.path = minoval.path;
 	}
-	logger.log(object);
+	logger.debug(object);
 
 	minoval.minodb.get([object.path + object.name], function(err, res) {
-		logger.log(JSON.stringify(err, null, 4), res);
+		logger.debug(JSON.stringify(err, null, 4), res);
 
 		var db_object = res.objects[0];
 		if (db_object != null && object["_id"] !== db_object["_id"]) {
-			logger.log(errors);
+			logger.debug(errors);
 			callback(
 				new FieldVal(null)
 				.invalid("name", errors.RULE_ALREADY_EXISTS)
@@ -314,10 +314,10 @@ MinoVal.prototype.save_rule = function(object, callback) {
 
 		object.name = object.minodb_type.name;
 
-		logger.log(object);
+		logger.debug(object);
 
 		minoval.minodb.save([object], function(err, res) {
-			logger.log(JSON.stringify(err, null, 4), res);
+			logger.debug(JSON.stringify(err, null, 4), res);
 			if (err) {
 				callback(err);
 				return;

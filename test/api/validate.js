@@ -1,4 +1,4 @@
-var logger = require("tracer").console();
+var logger = require("mino-logger");
 var assert = require("assert");
 var globals = require('../globals');
 
@@ -20,7 +20,7 @@ describe("validate", function() {
 		globals.minoval.validate("number_rule", "s", function(err, validator) {
 			assert.equal(err, null);
 			var val_error = validator.end();
-			logger.log(JSON.stringify(val_error, null, 4));
+			logger.debug(JSON.stringify(val_error, null, 4));
 			assert.deepEqual(val_error, {
 			    "error": 4,
 			    "error_message": "Multiple errors.",
@@ -58,4 +58,4 @@ describe("validate", function() {
 			done();
 		});
 	});
-})
+});

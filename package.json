@@ -9,14 +9,14 @@
     "errorhandler": "*",
     "request": "*",
     "connect": "2.x",
-    "tracer": "*",
     "minodb": "Mino/MinoDB#develop",
     "minosdk": "Mino/MinoSDK",
     "extend": "MarcusLongmuir/extend",
     "fieldval" : "FieldVal/fieldval-js#develop",
     "fieldval-rules" : "FieldVal/fieldval-rules-js#develop",
     "body-parser": "*",
-    "mustache-express": "*"
+    "mustache-express": "*",
+    "mino-logger": "Mino/mino-logger#0f8b81f946ebd956aea2fb66ea3e4fb4e418c3f7"
   },
   "devDependencies": {
     "gulp-nodemon" : "*",
